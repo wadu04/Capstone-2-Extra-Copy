@@ -1,0 +1,101 @@
+/* Custom CSS for BaguiXplore */
+
+/* Global Styles */
+:root {
+    --primary-color: #4a90e2;
+    --success-color: #2ecc71;
+    --light-bg: #f8f9fa;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
+}
+
+/* Navbar Styles */
+.navbar {
+    padding: 1rem 0;
+}
+
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+/* Hero Section */
+.hero-section {
+    background-color: var(--light-bg);
+    padding: 4rem 0;
+}
+
+.hero-section img {
+    max-height: 400px;
+    object-fit: cover;
+}
+
+/* Cards */
+.card {
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+/* Buttons */
+.btn {
+    border-radius: 25px;
+    padding: 0.5rem 1.5rem;
+}
+
+/* Footer */
+footer {
+    border-top: 1px solid #dee2e6;
+}
+
+/* Map Container */
+#map-container {
+    height: 500px;
+    border-radius: 10px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Blog Cards */
+.blog-card {
+    margin-bottom: 2rem;
+}
+
+.blog-card img {
+    height: 200px;
+    object-fit: cover;
+}
+
+/* Cultural Database */
+.culture-item {
+    padding: 2rem;
+    background: var(--light-bg);
+    border-radius: 10px;
+    margin-bottom: 2rem;
+}
+
+/* Authentication Forms */
+.auth-container {
+    max-width: 400px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .hero-section {
+        text-align: center;
+        padding: 2rem 0;
+    }
+    
+    .hero-section img {
+        margin-top: 2rem;
+    }
+}

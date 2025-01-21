@@ -1,0 +1,92 @@
+/* Admin Dashboard Styles */
+
+/* Sidebar */
+.sidebar {
+    min-height: 100vh;
+    width: 250px;
+    transition: all 0.3s;
+}
+
+.sidebar.toggled {
+    margin-left: -250px;
+}
+
+.sidebar .list-group-item {
+    border: none;
+    padding: 15px 20px;
+}
+
+.sidebar .list-group-item:hover {
+    background-color: #343a40 !important;
+    color: #fff !important;
+}
+
+.sidebar .list-group-item.active {
+    background-color: #0d6efd !important;
+}
+
+/* Content Wrapper */
+.content-wrapper {
+    width: calc(100% - 250px);
+    min-height: 100vh;
+    transition: all 0.3s;
+}
+
+.content-wrapper.toggled {
+    width: 100%;
+}
+
+/* Tables */
+.table-actions {
+    white-space: nowrap;
+}
+
+.table-actions .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Cards */
+.stat-card {
+    border-radius: 10px;
+    border: none;
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-card .card-body {
+    padding: 1.5rem;
+}
+
+.stat-card .icon {
+    font-size: 2rem;
+    opacity: 0.8;
+}
+
+/* Forms */
+.admin-form {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .sidebar {
+        margin-left: -250px;
+    }
+    
+    .sidebar.toggled {
+        margin-left: 0;
+    }
+    
+    .content-wrapper {
+        width: 100%;
+    }
+    
+    .content-wrapper.toggled {
+        margin-right: -250px;
+    }
+}
