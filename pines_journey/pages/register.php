@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - Pine's Journey</title>
+    <title>Register - Pines' Journey</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="../assets/css/style.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -73,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <div class="auth-container">
             <h2 class="text-center mb-4">
                 <a href="../index.php" class="text-decoration-none">
-                    <span class="text-primary">Bagui</span><span class="text-success">Xplore</span>
+                    <span class="text-primary">Pines'</span><span class="text-success">Journey</span>
                 </a>
             </h2>
             <?php if ($error): ?>

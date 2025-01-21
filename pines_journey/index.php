@@ -6,7 +6,7 @@ require_once 'includes/config.php';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pine's Journey - Discover Baguio City</title>
+    <title>Pines' Journey - Discover Baguio City</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Custom CSS -->
@@ -19,7 +19,7 @@ require_once 'includes/config.php';
     <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
         <div class="container">
             <a class="navbar-brand" href="index.php">
-                <span class="text-primary">Pine's</span><span class="text-success">Journey</span>
+                <span class="text-primary">Pines'</span><span class="text-success">Journey</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -205,7 +205,7 @@ require_once 'includes/config.php';
                     <p>Your ultimate guide to exploring Baguio City's culture and attractions.</p>
                 </div>
                 <div class="col-md-6 text-md-end">
-                    <p>&copy; 2025 Pine's Journey All rights reserved.</p>
+                    <p>&copy; 2025 Pines' Journey All rights reserved.</p>
                 </div>
             </div>
         </div>

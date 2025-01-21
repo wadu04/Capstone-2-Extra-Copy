@@ -2,7 +2,7 @@
     <div class="container">
         <div class="row">
             <div class="col-md-6">
-                <h5><span class="text-primary">Pine's</span><span class="text-success">Journey</span></h5>
+                <h5><span class="text-primary">Pines'</span><span class="text-success">Journey</span></h5>
                 <p>Your ultimate guide to exploring Baguio City's culture and attractions.</p>
             </div>
             <div class="col-md-3">
@@ -25,7 +25,7 @@
         </div>
         <div class="row mt-3">
             <div class="col-12 text-center">
-                <p class="mb-0">&copy; 2025 Pine's Journey. All rights reserved.</p>
+                <p class="mb-0">&copy; 2025 Pines' Journey. All rights reserved.</p>
             </div>
         </div>
     </div>
