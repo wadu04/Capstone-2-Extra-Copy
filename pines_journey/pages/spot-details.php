@@ -61,6 +61,33 @@ if (!$spot) {
         .review-star {
             color: #ffc107;
         }
+        .carousel-inner {
+            height: 400px;
+        }
+        .carousel-inner img {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+        }
+        .carousel-control-prev,
+        .carousel-control-next {
+            width: 5%;
+            background: rgba(0, 0, 0, 0.3);
+        }
+        .carousel-control-prev:hover,
+        .carousel-control-next:hover {
+            background: rgba(0, 0, 0, 0.5);
+        }
+        .carousel-indicators {
+            bottom: 0;
+            margin-bottom: 0.5rem;
+        }
+        .carousel-indicators button {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin: 0 4px;
+        }
     </style>
 </head>
 <body>
@@ -77,8 +104,48 @@ if (!$spot) {
         <div class="card shadow-sm">
             <div class="row g-0">
                 <div class="col-md-6">
-                    <?php if ($spot['image_url']): ?>
-                    <img src="<?php echo $spot['image_url']; ?>" class="img-fluid rounded-start" alt="<?php echo $spot['name']; ?>" style="width: 100%; height: 400px; object-fit: cover;">
+                    <?php
+                    // Collect all available images
+                    $images = array();
+                    if (!empty($spot['img2'])) $images[] = $spot['img2'];
+                    if (!empty($spot['img3'])) $images[] = $spot['img3'];
+                    if (!empty($spot['img4'])) $images[] = $spot['img4'];
+                    
+                    if (count($images) > 0):
+                    ?>
+                    <div id="spotCarousel" class="carousel slide" data-bs-ride="carousel">
+                        <div class="carousel-indicators">
+                            <?php for($i = 0; $i < count($images); $i++): ?>
+                            <button type="button" 
+                                    data-bs-target="#spotCarousel" 
+                                    data-bs-slide-to="<?php echo $i; ?>" 
+                                    <?php echo $i === 0 ? 'class="active" aria-current="true"' : ''; ?>
+                                    aria-label="Slide <?php echo $i + 1; ?>">
+                            </button>
+                            <?php endfor; ?>
+                        </div>
+                        <div class="carousel-inner rounded-start">
+                            <?php foreach($images as $index => $image): ?>
+                            <div class="carousel-item <?php echo $index === 0 ? 'active' : ''; ?>">
+                                <img src="<?php echo $image; ?>" class="d-block" alt="Tourist spot image <?php echo $index + 1; ?>">
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <?php if(count($images) > 1): ?>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#spotCarousel" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Previous</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#spotCarousel" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Next</span>
+                        </button>
+                        <?php endif; ?>
+                    </div>
+                    <?php else: ?>
+                        <?php if ($spot['image_url']): ?>
+                        <img src="<?php echo $spot['image_url']; ?>" class="img-fluid rounded-start" alt="<?php echo $spot['name']; ?>" style="width: 100%; height: 400px; object-fit: cover;">
+                        <?php endif; ?>
                     <?php endif; ?>
                 </div>
                 <div class="col-md-6">
@@ -89,10 +156,12 @@ if (!$spot) {
                                 <div class="mb-3">
                                     <div class="text-warning">
                                         <?php
-                                        $rating = round($spot['avg_rating']);
+                                        $rating = $spot['avg_rating']; // Don't round it
                                         for ($i = 1; $i <= 5; $i++) {
-                                            if ($i <= $rating) {
+                                            if ($i <= floor($rating)) {
                                                 echo '<i class="fas fa-star"></i>';
+                                            } elseif ($i - $rating <= 0.5 && $i - $rating > 0) {
+                                                echo '<i class="fas fa-star-half-alt"></i>';
                                             } else {
                                                 echo '<i class="far fa-star"></i>';
                                             }
@@ -202,9 +271,12 @@ if (!$spot) {
                             <h1 class="display-4"><?php echo number_format($spot['avg_rating'], 1); ?></h1>
                             <div class="text-warning mb-2">
                                 <?php
+                                $rating = $spot['avg_rating']; // Don't round it
                                 for ($i = 1; $i <= 5; $i++) {
-                                    if ($i <= $rating) {
+                                    if ($i <= floor($rating)) {
                                         echo '<i class="fas fa-star"></i>';
+                                    } elseif ($i - $rating <= 0.5 && $i - $rating > 0) {
+                                        echo '<i class="fas fa-star-half-alt"></i>';
                                     } else {
                                         echo '<i class="far fa-star"></i>';
                                     }
@@ -322,6 +394,17 @@ if (!$spot) {
                     }
                 });
             });
+        });
+        
+        // Initialize carousel with custom interval
+        document.addEventListener('DOMContentLoaded', function() {
+            var myCarousel = document.querySelector('#spotCarousel');
+            if (myCarousel) {
+                var carousel = new bootstrap.Carousel(myCarousel, {
+                    interval: 5000, // Change slides every 5 seconds
+                    wrap: true // Enable continuous loop
+                });
+            }
         });
     </script>
 </body>

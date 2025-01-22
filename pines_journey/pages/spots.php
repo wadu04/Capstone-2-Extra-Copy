@@ -2,13 +2,19 @@
 require_once '../includes/config.php';
 
 // Get tourist spots with ratings
+$search = isset($_GET['search']) ? $_GET['search'] : '';
 $sql = "SELECT ts.*, 
         COALESCE(AVG(r.rating), 0) as avg_rating,
         COUNT(r.review_id) as review_count
         FROM tourist_spots ts
-        LEFT JOIN reviews r ON ts.spot_id = r.spot_id
-        GROUP BY ts.spot_id
-        ORDER BY ts.name ASC";
+        LEFT JOIN reviews r ON ts.spot_id = r.spot_id";
+
+if (!empty($search)) {
+    $search = $conn->real_escape_string($search);
+    $sql .= " WHERE ts.name LIKE '%$search%' OR ts.location LIKE '%$search%' OR ts.description LIKE '%$search%'";
+}
+
+$sql .= " GROUP BY ts.spot_id ORDER BY ts.name ASC";
 $result = $conn->query($sql);
 ?>
 <!DOCTYPE html>
@@ -20,12 +26,43 @@ $result = $conn->query($sql);
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="../assets/css/style.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .search-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            margin-right: 20px;
+        }
+        .search-input {
+            display: none;
+            padding: 8px 35px 8px 15px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            margin-right: 10px;
+            transition: all 0.3s ease;
+        }
+        .search-input.active {
+            display: block;
+            width: 250px;
+        }
+        .search-icon {
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: #555;
+        }
+    </style>
 </head>
 <body>
     <?php include '../includes/header.php'; ?>
 
     <div class="container py-4">
-        <h2 class="mb-4">Tourist Spots in Baguio City</h2>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Tourist Spots in Baguio City</h2>
+            <div class="search-container">
+                <input type="text" class="search-input" id="searchInput" placeholder="Search spots...">
+                <i class="fas fa-search search-icon" id="searchIcon"></i>
+            </div>
+        </div>
         
         <div class="row g-4">
             <?php while ($spot = $result->fetch_assoc()): ?>
@@ -48,17 +85,16 @@ $result = $conn->query($sql);
                         <div class="mb-3">
                             <div class="text-warning">
                                 <?php
-                              // Replace the existing star rating code with:
-$rating = $spot['avg_rating'];  // Don't round it
-for ($i = 1; $i <= 5; $i++) {
-    if ($i <= floor($rating)) {
-        echo '<i class="fas fa-star"></i>';
-    } elseif ($i - $rating <= 0.5 && $i - $rating > 0) {
-        echo '<i class="fas fa-star-half-alt"></i>';
-    } else {
-        echo '<i class="far fa-star"></i>';
-    }
-}
+                              $rating = $spot['avg_rating'];  // Don't round it
+                              for ($i = 1; $i <= 5; $i++) {
+                                  if ($i <= floor($rating)) {
+                                      echo '<i class="fas fa-star"></i>';
+                                  } elseif ($i - $rating <= 0.5 && $i - $rating > 0) {
+                                      echo '<i class="fas fa-star-half-alt"></i>';
+                                  } else {
+                                      echo '<i class="far fa-star"></i>';
+                                  }
+                              }
                                 ?>
                                 <span class="text-muted ms-2">
                                     (<?php echo number_format($spot['avg_rating'], 1); ?>) 
@@ -79,5 +115,47 @@ for ($i = 1; $i <= 5; $i++) {
     <?php include '../includes/footer.php'; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchIcon = document.getElementById('searchIcon');
+            const searchInput = document.getElementById('searchInput');
+            
+            // Toggle search input visibility
+            searchIcon.addEventListener('click', function() {
+                searchInput.classList.toggle('active');
+                if (searchInput.classList.contains('active')) {
+                    searchInput.focus();
+                }
+            });
+
+            // Handle search when user types
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    const searchTerm = searchInput.value.trim();
+                    if (searchTerm) {
+                        window.location.href = `spots.php?search=${encodeURIComponent(searchTerm)}`;
+                    } else {
+                        // If search is empty, go back to main spots page
+                        window.location.href = 'spots.php';
+                    }
+                }
+            });
+
+            // Clear search and return to main page when input is cleared
+            searchInput.addEventListener('input', function() {
+                if (this.value.trim() === '' && new URLSearchParams(window.location.search).has('search')) {
+                    window.location.href = 'spots.php';
+                }
+            });
+
+            // If there's a search parameter in URL, show the search input and populate it
+            const urlParams = new URLSearchParams(window.location.search);
+            const searchParam = urlParams.get('search');
+            if (searchParam) {
+                searchInput.classList.add('active');
+                searchInput.value = searchParam;
+            }
+        });
+    </script>
 </body>
 </html>

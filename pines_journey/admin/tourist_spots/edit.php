@@ -26,20 +26,63 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $tips = sanitize($_POST['tips']);
     $latitude = (float)$_POST['latitude'];
     $longitude = (float)$_POST['longitude'];
-    $image_url = sanitize($_POST['image_url']);
 
-    $stmt = $conn->prepare("UPDATE tourist_spots SET name = ?, location = ?, description = ?, opening_hours = ?, entrance_fee = ?, tips = ?, latitude = ?, longitude = ?, image_url = ? WHERE spot_id = ?");
-    $stmt->bind_param("ssssdsddsi", $name, $location, $description, $opening_hours, $entrance_fee, $tips, $latitude, $longitude, $image_url, $spot_id);
-    
-    if ($stmt->execute()) {
-        $success = "Tourist spot updated successfully";
-        // Refresh spot data
-        $stmt = $conn->prepare("SELECT * FROM tourist_spots WHERE spot_id = ?");
-        $stmt->bind_param("i", $spot_id);
-        $stmt->execute();
-        $spot = $stmt->get_result()->fetch_assoc();
-    } else {
-        $error = "Failed to update tourist spot";
+    // Handle multiple file uploads
+    $target_dir = "../../uploads/tourist_spots/";
+    if (!file_exists($target_dir)) {
+        mkdir($target_dir, 0777, true);
+    }
+
+    // Keep existing image URLs
+    $image_urls = array(
+        'image_url' => $spot['image_url'],
+        'img2' => $spot['img2'],
+        'img3' => $spot['img3'],
+        'img4' => $spot['img4']
+    );
+
+    // Process each image upload
+    $image_fields = array('image' => 'image_url', 'img2' => 'img2', 'img3' => 'img3', 'img4' => 'img4');
+    foreach ($image_fields as $field => $db_field) {
+        if (isset($_FILES[$field]) && $_FILES[$field]['error'] == 0) {
+            $file_extension = strtolower(pathinfo($_FILES[$field]["name"], PATHINFO_EXTENSION));
+            $new_filename = uniqid() . '.' . $file_extension;
+            $target_file = $target_dir . $new_filename;
+            
+            if (move_uploaded_file($_FILES[$field]["tmp_name"], $target_file)) {
+                // Delete old image if it exists
+                if (!empty($image_urls[$db_field])) {
+                    $old_file = str_replace("../", "../../", $image_urls[$db_field]);
+                    if (file_exists($old_file)) {
+                        unlink($old_file);
+                    }
+                }
+                $image_urls[$db_field] = "../uploads/tourist_spots/" . $new_filename;
+            } else {
+                $error = "Failed to upload " . $field;
+                break;
+            }
+        }
+    }
+
+    if (!$error) {
+        $stmt = $conn->prepare("UPDATE tourist_spots SET name = ?, location = ?, description = ?, opening_hours = ?, entrance_fee = ?, tips = ?, latitude = ?, longitude = ?, image_url = ?, img2 = ?, img3 = ?, img4 = ? WHERE spot_id = ?");
+        $stmt->bind_param("ssssdsddssssi", 
+            $name, $location, $description, $opening_hours, $entrance_fee, $tips,
+            $latitude, $longitude, $image_urls['image_url'], $image_urls['img2'],
+            $image_urls['img3'], $image_urls['img4'], $spot_id
+        );
+        
+        if ($stmt->execute()) {
+            $success = "Tourist spot updated successfully";
+            // Refresh spot data
+            $stmt = $conn->prepare("SELECT * FROM tourist_spots WHERE spot_id = ?");
+            $stmt->bind_param("i", $spot_id);
+            $stmt->execute();
+            $spot = $stmt->get_result()->fetch_assoc();
+        } else {
+            $error = "Failed to update tourist spot";
+        }
     }
 }
 
@@ -62,7 +105,7 @@ ob_start();
             <div class="alert alert-success"><?php echo $success; ?></div>
         <?php endif; ?>
 
-        <form method="POST" class="admin-form">
+        <form method="POST" class="admin-form" enctype="multipart/form-data">
             <div class="row">
                 <div class="col-md-6">
                     <div class="mb-3">
@@ -99,7 +142,7 @@ ob_start();
             </div>
 
             <div class="mb-3">
-                <label for="tips" class="form-label">Tips for Visitors</label>
+                <label for="tips" class="form-label">Tips</label>
                 <textarea class="form-control" id="tips" name="tips" rows="3"><?php echo $spot['tips']; ?></textarea>
             </div>
 
@@ -118,14 +161,65 @@ ob_start();
                 </div>
             </div>
 
-            <div class="mb-3">
-                <label for="image_url" class="form-label">Image URL</label>
-                <input type="url" class="form-control" id="image_url" name="image_url" value="<?php echo $spot['image_url']; ?>">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="image" class="form-label">Main Image (Card Display)</label>
+                        <?php if ($spot['image_url']): ?>
+                            <div class="mb-2">
+                                <img src="../<?php echo $spot['image_url']; ?>" alt="Current image" style="max-width: 200px; height: auto;">
+                            </div>
+                        <?php endif; ?>
+                        <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                        <small class="text-muted">Leave empty to keep current image</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="img2" class="form-label">Background Image</label>
+                        <?php if ($spot['img2']): ?>
+                            <div class="mb-2">
+                                <img src="../<?php echo $spot['img2']; ?>" alt="Current background" style="max-width: 200px; height: auto;">
+                            </div>
+                        <?php endif; ?>
+                        <input type="file" class="form-control" id="img2" name="img2" accept="image/*">
+                        <small class="text-muted">Leave empty to keep current image</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="img3" class="form-label">Additional Image 1</label>
+                        <?php if ($spot['img3']): ?>
+                            <div class="mb-2">
+                                <img src="../<?php echo $spot['img3']; ?>" alt="Additional image 1" style="max-width: 200px; height: auto;">
+                            </div>
+                        <?php endif; ?>
+                        <input type="file" class="form-control" id="img3" name="img3" accept="image/*">
+                        <small class="text-muted">Leave empty to keep current image</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="img4" class="form-label">Additional Image 2</label>
+                        <?php if ($spot['img4']): ?>
+                            <div class="mb-2">
+                                <img src="../<?php echo $spot['img4']; ?>" alt="Additional image 2" style="max-width: 200px; height: auto;">
+                            </div>
+                        <?php endif; ?>
+                        <input type="file" class="form-control" id="img4" name="img4" accept="image/*">
+                        <small class="text-muted">Leave empty to keep current image</small>
+                    </div>
+                </div>
             </div>
 
             <div id="map" style="height: 400px; margin-bottom: 20px;"></div>
 
-            <button type="submit" class="btn btn-primary">Update Tourist Spot</button>
+            <div class="text-end">
+                <button type="submit" class="btn btn-primary">Update Tourist Spot</button>
+            </div>
         </form>
     </div>
 </div>

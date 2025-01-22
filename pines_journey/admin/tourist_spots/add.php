@@ -14,32 +14,80 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $latitude = (float)$_POST['latitude'];
     $longitude = (float)$_POST['longitude'];
     
-    // Handle file upload
-    $image_url = '';
-    if(isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
-        $target_dir = "../../uploads/tourist_spots/";
-        if (!file_exists($target_dir)) {
-            mkdir($target_dir, 0777, true);
-        }
-        $file_extension = strtolower(pathinfo($_FILES["image"]["name"], PATHINFO_EXTENSION));
-        $new_filename = uniqid() . '.' . $file_extension;
-        $target_file = $target_dir . $new_filename;
-        
-        if(move_uploaded_file($_FILES["image"]["tmp_name"], $target_file)) {
-            $image_url = "../uploads/tourist_spots/" . $new_filename;
-        } else {
-            $error = "Failed to upload image";
+    // Handle multiple file uploads
+    $target_dir = "../../uploads/tourist_spots/";
+    if (!file_exists($target_dir)) {
+        mkdir($target_dir, 0777, true);
+    }
+
+    $image_urls = array(
+        'image_url' => '',
+        'img2' => '',
+        'img3' => '',
+        'img4' => ''
+    );
+
+    // Process each image upload
+    $image_fields = array('image', 'img2', 'img3', 'img4');
+    foreach ($image_fields as $index => $field) {
+        if (isset($_FILES[$field]) && $_FILES[$field]['error'] == 0) {
+            $file_extension = strtolower(pathinfo($_FILES[$field]["name"], PATHINFO_EXTENSION));
+            // Validate file extension
+            $allowed_extensions = array('jpg', 'jpeg', 'png', 'gif');
+            if (!in_array($file_extension, $allowed_extensions)) {
+                $error = "Invalid file type for " . $field . ". Only JPG, JPEG, PNG & GIF files are allowed.";
+                break;
+            }
+            
+            $new_filename = uniqid() . '.' . $file_extension;
+            $target_file = $target_dir . $new_filename;
+            
+            if (move_uploaded_file($_FILES[$field]["tmp_name"], $target_file)) {
+                $db_field = $index === 0 ? 'image_url' : $field;
+                $image_urls[$db_field] = "../uploads/tourist_spots/" . $new_filename;
+            } else {
+                $error = "Failed to upload " . $field;
+                break;
+            }
         }
     }
 
     if (!$error) {
-        $stmt = $conn->prepare("INSERT INTO tourist_spots (name, location, description, opening_hours, entrance_fee, tips, latitude, longitude, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("ssssdsdds", $name, $location, $description, $opening_hours, $entrance_fee, $tips, $latitude, $longitude, $image_url);
-        
-        if ($stmt->execute()) {
-            $success = "Tourist spot added successfully";
-        } else {
-            $error = "Failed to add tourist spot";
+        try {
+            $stmt = $conn->prepare("INSERT INTO tourist_spots (name, location, description, opening_hours, entrance_fee, tips, latitude, longitude, image_url, img2, img3, img4) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            
+            if (!$stmt) {
+                throw new Exception("Prepare failed: " . $conn->error);
+            }
+
+            $bind_result = $stmt->bind_param("ssssdsddssss", 
+                $name, 
+                $location, 
+                $description, 
+                $opening_hours, 
+                $entrance_fee, 
+                $tips, 
+                $latitude, 
+                $longitude, 
+                $image_urls['image_url'], 
+                $image_urls['img2'], 
+                $image_urls['img3'], 
+                $image_urls['img4']
+            );
+
+            if (!$bind_result) {
+                throw new Exception("Binding parameters failed: " . $stmt->error);
+            }
+
+            if ($stmt->execute()) {
+                $success = "Tourist spot added successfully";
+                // Clear form data on success
+                $_POST = array();
+            } else {
+                throw new Exception("Execute failed: " . $stmt->error);
+            }
+        } catch (Exception $e) {
+            $error = $e->getMessage();
         }
     }
 }
@@ -57,10 +105,10 @@ ob_start();
     </div>
     <div class="card-body">
         <?php if ($error): ?>
-            <div class="alert alert-danger"><?php echo $error; ?></div>
+            <div class="alert alert-danger"><?php echo htmlspecialchars($error); ?></div>
         <?php endif; ?>
         <?php if ($success): ?>
-            <div class="alert alert-success"><?php echo $success; ?></div>
+            <div class="alert alert-success"><?php echo htmlspecialchars($success); ?></div>
         <?php endif; ?>
 
         <form method="POST" class="admin-form" enctype="multipart/form-data">
@@ -68,68 +116,97 @@ ob_start();
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="name" class="form-label">Name</label>
-                        <input type="text" class="form-control" id="name" name="name" required>
+                        <input type="text" class="form-control" id="name" name="name" value="<?php echo isset($_POST['name']) ? htmlspecialchars($_POST['name']) : ''; ?>" required>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="location" class="form-label">Location</label>
-                        <input type="text" class="form-control" id="location" name="location" required>
+                        <input type="text" class="form-control" id="location" name="location" value="<?php echo isset($_POST['location']) ? htmlspecialchars($_POST['location']) : ''; ?>" required>
                     </div>
                 </div>
             </div>
 
             <div class="mb-3">
                 <label for="description" class="form-label">Description</label>
-                <textarea class="form-control" id="description" name="description" rows="4" required></textarea>
+                <textarea class="form-control" id="description" name="description" rows="4" required><?php echo isset($_POST['description']) ? htmlspecialchars($_POST['description']) : ''; ?></textarea>
             </div>
 
             <div class="row">
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="opening_hours" class="form-label">Opening Hours</label>
-                        <input type="text" class="form-control" id="opening_hours" name="opening_hours" required>
+                        <input type="text" class="form-control" id="opening_hours" name="opening_hours" value="<?php echo isset($_POST['opening_hours']) ? htmlspecialchars($_POST['opening_hours']) : ''; ?>" required>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="entrance_fee" class="form-label">Entrance Fee (₱)</label>
-                        <input type="number" step="0.01" class="form-control" id="entrance_fee" name="entrance_fee" required>
+                        <input type="number" step="0.01" class="form-control" id="entrance_fee" name="entrance_fee" value="<?php echo isset($_POST['entrance_fee']) ? htmlspecialchars($_POST['entrance_fee']) : ''; ?>" required>
                     </div>
                 </div>
             </div>
 
             <div class="mb-3">
-                <label for="tips" class="form-label">Tips for Visitors</label>
-                <textarea class="form-control" id="tips" name="tips" rows="3"></textarea>
+                <label for="tips" class="form-label">Tips</label>
+                <textarea class="form-control" id="tips" name="tips" rows="3"><?php echo isset($_POST['tips']) ? htmlspecialchars($_POST['tips']) : ''; ?></textarea>
             </div>
 
             <div class="row">
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="latitude" class="form-label">Latitude</label>
-                        <input type="number" step="any" class="form-control" id="latitude" name="latitude" required>
+                        <input type="number" step="any" class="form-control" id="latitude" name="latitude" value="<?php echo isset($_POST['latitude']) ? htmlspecialchars($_POST['latitude']) : ''; ?>" required>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="longitude" class="form-label">Longitude</label>
-                        <input type="number" step="any" class="form-control" id="longitude" name="longitude" required>
+                        <input type="number" step="any" class="form-control" id="longitude" name="longitude" value="<?php echo isset($_POST['longitude']) ? htmlspecialchars($_POST['longitude']) : ''; ?>" required>
                     </div>
                 </div>
             </div>
 
-            <div class="mb-3">
-                <label for="image" class="form-label">Image</label>
-                <input type="file" class="form-control" id="image" name="image" accept="image/*">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="image" class="form-label">Main Image (Card Display)</label>
+                        <input type="file" class="form-control" id="image" name="image" accept="image/*" required>
+                        <small class="text-muted">This image will be shown in the tourist spots list</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="img2" class="form-label">Background Image</label>
+                        <input type="file" class="form-control" id="img2" name="img2" accept="image/*">
+                        <small class="text-muted">This image will be shown as background in spot details</small>
+                    </div>
+                </div>
             </div>
 
-            <div id="map" style="height: 400px; margin-bottom: 20px;"></div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="img3" class="form-label">Additional Image 1</label>
+                        <input type="file" class="form-control" id="img3" name="img3" accept="image/*">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="img4" class="form-label">Additional Image 2</label>
+                        <input type="file" class="form-control" id="img4" name="img4" accept="image/*">
+                    </div>
+                </div>
+            </div>
 
-            <button type="submit" class="btn btn-primary">Add Tourist Spot</button>
+            <div class="text-end">
+                <button type="submit" class="btn btn-primary">Add Tourist Spot</button>
+            </div>
         </form>
     </div>
 </div>
+
+<div id="map" style="height: 400px; margin-bottom: 20px;"></div>
 
 <!-- Add Google Maps -->
 <script src="https://maps.googleapis.com/maps/api/js?key=<?php echo GOOGLE_MAPS_API_KEY; ?>&callback=initMap" async defer></script>
@@ -149,6 +226,13 @@ function initMap() {
     map.addListener("click", (e) => {
         placeMarker(e.latLng);
     });
+
+    // If latitude and longitude are already set, show marker
+    const lat = document.getElementById('latitude').value;
+    const lng = document.getElementById('longitude').value;
+    if (lat && lng) {
+        placeMarker(new google.maps.LatLng(parseFloat(lat), parseFloat(lng)));
+    }
 }
 
 function placeMarker(location) {
