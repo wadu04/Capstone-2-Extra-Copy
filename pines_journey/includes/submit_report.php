@@ -2,12 +2,42 @@
 require_once 'config.php';
 require_once 'auth.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isLoggedIn()) {
-    $content_type = $_POST['content_type'];
-    $content_id = (int)$_POST['content_id'];
-    $report_type = $_POST['report_type'];
-    $description = $_POST['description'];
+// Enable error reporting
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+header('Content-Type: application/json');
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isLoggedIn()) {
+        echo json_encode(['status' => 'error', 'message' => 'User not logged in']);
+        exit;
+    }
+
+    // Log the POST data for debugging
+    error_log("POST data: " . print_r($_POST, true));
+
+    $content_type = $_POST['content_type'] ?? '';
+    $content_id = isset($_POST['content_id']) ? (int)$_POST['content_id'] : 0;
+    $report_type = $_POST['report_type'] ?? '';
+    $description = $_POST['description'] ?? '';
     $reporter_id = $_SESSION['user_id'];
+
+    // Validate required fields
+    if (empty($content_type) || empty($content_id) || empty($report_type) || empty($description)) {
+        echo json_encode([
+            'status' => 'error', 
+            'message' => 'Missing required fields',
+            'debug' => [
+                'content_type' => $content_type,
+                'content_id' => $content_id,
+                'report_type' => $report_type,
+                'description' => $description,
+                'reporter_id' => $reporter_id
+            ]
+        ]);
+        exit;
+    }
 
     try {
         // Start transaction
@@ -18,7 +48,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isLoggedIn()) {
                         VALUES (?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($report_query);
         $stmt->bind_param("isiss", $reporter_id, $content_type, $content_id, $report_type, $description);
-        $stmt->execute();
+        
+        if (!$stmt->execute()) {
+            throw new Exception("Database error: " . $stmt->error);
+        }
         
         // Get the report ID
         $report_id = $conn->insert_id;
@@ -27,7 +60,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isLoggedIn()) {
         $notification_query = "INSERT INTO admin_notifications (report_id) VALUES (?)";
         $stmt = $conn->prepare($notification_query);
         $stmt->bind_param("i", $report_id);
-        $stmt->execute();
+        
+        if (!$stmt->execute()) {
+            throw new Exception("Database error: " . $stmt->error);
+        }
 
         // Commit transaction
         $conn->commit();
@@ -37,8 +73,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isLoggedIn()) {
     } catch (Exception $e) {
         // Rollback transaction on error
         $conn->rollback();
-        echo json_encode(['status' => 'error', 'message' => 'Error submitting report: ' . $e->getMessage()]);
+        error_log("Report submission error: " . $e->getMessage());
+        echo json_encode([
+            'status' => 'error', 
+            'message' => 'Error submitting report: ' . $e->getMessage(),
+            'debug' => [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]
+        ]);
     }
 } else {
-    echo json_encode(['status' => 'error', 'message' => 'Invalid request or user not logged in']);
+    echo json_encode(['status' => 'error', 'message' => 'Invalid request method']);
 }

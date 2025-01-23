@@ -23,9 +23,7 @@
                 <li class="nav-item">
                     <a class="nav-link" href="../pages/blog.php">Blog</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="../pages/discover.php">Discover</a>
-                </li>
+               
                 <li class="nav-item">
                     <a class="nav-link" href="../pages/games.php">Games</a>
                 </li>

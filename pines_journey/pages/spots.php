@@ -11,7 +11,7 @@ $sql = "SELECT ts.*,
 
 if (!empty($search)) {
     $search = $conn->real_escape_string($search);
-    $sql .= " WHERE ts.name LIKE '%$search%' OR ts.location LIKE '%$search%' OR ts.description LIKE '%$search%'";
+    $sql .= " WHERE ts.name LIKE '%$search%' OR ts.location LIKE '%$search%' OR ts.description LIKE '%$search%' OR ts.tips LIKE '%$search%'";
 }
 
 $sql .= " GROUP BY ts.spot_id ORDER BY ts.name ASC";

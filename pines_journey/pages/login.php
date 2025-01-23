@@ -14,12 +14,12 @@ if (isLoggedIn()) {
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $email = sanitize($_POST['email']);
+    $username = sanitize($_POST['username']);
     $password = $_POST['password'];
 
-    $sql = "SELECT user_id, username, password, role FROM users WHERE email = ?";
+    $sql = "SELECT user_id, username, password, role FROM users WHERE username = ?";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $email);
+    $stmt->bind_param("s", $username);
     $stmt->execute();
     $result = $stmt->get_result();
 
@@ -38,10 +38,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
             exit();
         } else {
-            $error = "Invalid email or password";
+            $error = "Invalid username or password";
         }
     } else {
-        $error = "Invalid email or password";
+        $error = "Invalid username or password";
     }
 }
 ?>
@@ -68,8 +68,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <?php endif; ?>
             <form method="POST" action="">
                 <div class="mb-3">
-                    <label for="email" class="form-label">Email address</label>
-                    <input type="email" class="form-control" id="email" name="email" required>
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="username" name="username" required>
                 </div>
                 <div class="mb-3">
                     <label for="password" class="form-label">Password</label>
