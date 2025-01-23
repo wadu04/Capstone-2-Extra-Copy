@@ -9,8 +9,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_spot'])) {
     exit();
 }
 
-// Get all tourist spots
-$sql = "SELECT * FROM tourist_spots ORDER BY name";
+// Pagination settings
+$items_per_page = 5;
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$offset = ($page - 1) * $items_per_page;
+
+// Get total number of spots
+$count_result = $conn->query("SELECT COUNT(*) as total FROM tourist_spots");
+$total_spots = $count_result->fetch_assoc()['total'];
+$total_pages = ceil($total_spots / $items_per_page);
+
+// Get tourist spots for current page
+$sql = "SELECT * FROM tourist_spots ORDER BY name LIMIT $offset, $items_per_page";
 $result = $conn->query($sql);
 
 $page_title = "Tourist Spots Management";
@@ -61,6 +71,30 @@ ob_start();
                 </tbody>
             </table>
         </div>
+
+        <?php if ($total_pages > 1): ?>
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <?php if ($page > 1): ?>
+                    <li class="page-item">
+                        <a class="page-link" href="?page=<?php echo ($page - 1); ?>">Previous</a>
+                    </li>
+                <?php endif; ?>
+
+                <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                    <li class="page-item <?php echo $page == $i ? 'active' : ''; ?>">
+                        <a class="page-link" href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
+                    </li>
+                <?php endfor; ?>
+
+                <?php if ($page < $total_pages): ?>
+                    <li class="page-item">
+                        <a class="page-link" href="?page=<?php echo ($page + 1); ?>">Next</a>
+                    </li>
+                <?php endif; ?>
+            </ul>
+        </nav>
+        <?php endif; ?>
     </div>
 </div>
 

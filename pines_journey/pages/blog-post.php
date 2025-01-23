@@ -29,11 +29,35 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isLoggedIn()) {
         case 'delete_post':
             if (isset($_POST['blog_id'])) {
                 $blog_id = (int)$_POST['blog_id'];
-                $stmt = $conn->prepare("DELETE FROM blogs WHERE blog_id = ? AND user_id = ?");
-                $stmt->bind_param("ii", $blog_id, $user_id);
-                if ($stmt->execute() && $stmt->affected_rows > 0) {
-                    header("Location: blog.php");
-                    exit();
+                
+                // Start transaction
+                $conn->begin_transaction();
+                
+                try {
+                    // Delete comments first
+                    $stmt = $conn->prepare("DELETE FROM comments WHERE blog_id = ?");
+                    $stmt->bind_param("i", $blog_id);
+                    $stmt->execute();
+                    
+                    // Delete favorites
+                    $stmt = $conn->prepare("DELETE FROM favorites WHERE blog_id = ?");
+                    $stmt->bind_param("i", $blog_id);
+                    $stmt->execute();
+                    
+                    // Finally delete the blog post
+                    $stmt = $conn->prepare("DELETE FROM blogs WHERE blog_id = ? AND user_id = ?");
+                    $stmt->bind_param("ii", $blog_id, $user_id);
+                    $stmt->execute();
+                    
+                    if ($stmt->affected_rows > 0) {
+                        $conn->commit();
+                        header("Location: blog.php");
+                        exit();
+                    } else {
+                        $conn->rollback();
+                    }
+                } catch (Exception $e) {
+                    $conn->rollback();
                 }
             }
             break;

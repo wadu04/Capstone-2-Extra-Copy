@@ -114,6 +114,14 @@ $result = $conn->query($sql);
         .report-btn {
             color: #dc3545;
         }
+        .card-img-top {
+            width: 100%;
+            height: 250px; /* Fixed height for all images */
+            object-fit: cover; /* This ensures the image covers the area without distortion */
+        }
+        .card {
+            height: auto; /* Let the card adjust to content */
+        }
     </style>
 </head>
 <body>
