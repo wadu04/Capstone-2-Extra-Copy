@@ -107,7 +107,7 @@ require_once '../includes/config.php';
     <div class="games-container py-4">
         <div class="nav-buttons text-center">
             <a href="games.php" class="btn btn-primary">Games</a>
-            <a href="leaderboard.php" class="btn btn-outline-primary"></a>
+            <a href="leaderboard.php" class="btn btn-outline-primary">Earned Badge</a>
         </div>
         
         <div class="games-header">
