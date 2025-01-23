@@ -17,13 +17,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_user'])) {
     exit();
 }
 
-// Get users with role filter
+// Pagination settings
+$items_per_page = 6;
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$offset = ($page - 1) * $items_per_page;
+
+// Get users with role filter and pagination
 $role_filter = isset($_GET['role']) ? $_GET['role'] : '';
+$count_sql = "SELECT COUNT(*) as total FROM users";
+if ($role_filter) {
+    $count_sql .= " WHERE role = '$role_filter'";
+}
+$count_result = $conn->query($count_sql);
+$total_users = $count_result->fetch_assoc()['total'];
+$total_pages = ceil($total_users / $items_per_page);
+
 $sql = "SELECT * FROM users";
 if ($role_filter) {
     $sql .= " WHERE role = '$role_filter'";
 }
-$sql .= " ORDER BY username";
+$sql .= " ORDER BY username LIMIT $offset, $items_per_page";
 $result = $conn->query($sql);
 
 $page_title = "User Management";
@@ -82,6 +95,36 @@ ob_start();
                 </tbody>
             </table>
         </div>
+
+        <?php if ($total_pages > 1): ?>
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <?php if ($page > 1): ?>
+                    <li class="page-item">
+                        <a class="page-link" href="?page=<?php echo ($page - 1); ?><?php echo $role_filter ? '&role='.$role_filter : ''; ?>">
+                            Previous
+                        </a>
+                    </li>
+                <?php endif; ?>
+
+                <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                    <li class="page-item <?php echo $page == $i ? 'active' : ''; ?>">
+                        <a class="page-link" href="?page=<?php echo $i; ?><?php echo $role_filter ? '&role='.$role_filter : ''; ?>">
+                            <?php echo $i; ?>
+                        </a>
+                    </li>
+                <?php endfor; ?>
+
+                <?php if ($page < $total_pages): ?>
+                    <li class="page-item">
+                        <a class="page-link" href="?page=<?php echo ($page + 1); ?><?php echo $role_filter ? '&role='.$role_filter : ''; ?>">
+                            Next
+                        </a>
+                    </li>
+                <?php endif; ?>
+            </ul>
+        </nav>
+        <?php endif; ?>
     </div>
 </div>
 
