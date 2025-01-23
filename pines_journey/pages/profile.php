@@ -12,7 +12,7 @@ $user_id = $_SESSION['user_id'];
 
 // Handle profile picture upload
 if (isset($_FILES['profile_picture'])) {
-    $target_dir = "../uploads/defualt_pic/";
+    $target_dir = "../uploads/default_pic/";
     if (!file_exists($target_dir)) {
         mkdir($target_dir, 0777, true);
     }
@@ -25,10 +25,14 @@ if (isset($_FILES['profile_picture'])) {
         $relative_path = str_replace("../", "/", $target_file);
         $stmt = $conn->prepare("UPDATE users SET profile_picture = ? WHERE user_id = ?");
         $stmt->bind_param("si", $relative_path, $user_id);
-        $stmt->execute();
-        $_SESSION['success_message'] = "Profile picture updated successfully!";
+        if ($stmt->execute()) {
+            $_SESSION['profile_picture'] = $relative_path;
+            $_SESSION['success_message'] = "Profile picture updated successfully!";
+        } else {
+            $_SESSION['error_message'] = "Error updating profile picture in database.";
+        }
     } else {
-        $_SESSION['error_message'] = "Sorry, there was an error uploading your file.";
+        $_SESSION['error_message'] = "Sorry, there was an error uploading your file. Make sure it's a valid image (JPG, JPEG, PNG, or GIF).";
     }
     header("Location: profile.php");
     exit();
@@ -53,8 +57,14 @@ $stmt->execute();
 $points_result = $stmt->get_result()->fetch_assoc();
 $total_points = $points_result ? $points_result['total_points'] : 0;
 
-// Fetch user's QR scans
-$stmt = $conn->prepare("SELECT * FROM user_scans WHERE user_id = ? ORDER BY scanned_at DESC");
+// Fetch user's QR scans with badges
+$stmt = $conn->prepare("
+    SELECT us.qr_content, qc.badge 
+    FROM user_scans us 
+    LEFT JOIN qr_codes qc ON us.qr_content = qc.content 
+    WHERE us.user_id = ? 
+    ORDER BY us.scanned_at DESC
+");
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $scans = $stmt->get_result();
@@ -116,9 +126,9 @@ $scans = $stmt->get_result();
                     <h3><?php echo htmlspecialchars($user_result['username']); ?></h3>
                     <p class="text-muted"><?php echo htmlspecialchars($user_result['email']); ?></p>
                     
-                    <div class="mt-4">
+                    <!--<div class="mt-4">
                         <h4>QR Points: <?php echo $total_points; ?></h4>
-                    </div>
+                    </div>-->
                 </div>
             </div>
 
@@ -146,25 +156,25 @@ $scans = $stmt->get_result();
                 <div class="profile-section">
                     <h3>My QR Code Scans</h3>
                     <?php if ($scans->num_rows > 0): ?>
-                        <div class="table-responsive">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>QR Content</th>
-                                        <th>Points Earned</th>
-                                        <th>Scanned Date</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php while ($scan = $scans->fetch_assoc()): ?>
-                                        <tr>
-                                            <td><?php echo htmlspecialchars($scan['qr_content']); ?></td>
-                                            <td><?php echo $scan['points_earned']; ?></td>
-                                            <td><?php echo date('F j, Y g:i A', strtotime($scan['scanned_at'])); ?></td>
-                                        </tr>
-                                    <?php endwhile; ?>
-                                </tbody>
-                            </table>
+                        <div class="row row-cols-1 row-cols-md-3 g-4">
+                            <?php while ($scan = $scans->fetch_assoc()): ?>
+                                <div class="col">
+                                    <div class="card h-100">
+                                        <?php if ($scan['badge']): ?>
+                                            <img src="../uploads/qr_badge/<?php echo htmlspecialchars($scan['badge']); ?>" 
+                                                 class="card-img-top" alt="Badge" style="height: 200px; object-fit: contain;">
+                                        <?php else: ?>
+                                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                                                 style="height: 200px;">
+                                                <span class="text-muted">No Badge</span>
+                                            </div>
+                                        <?php endif; ?>
+                                        <div class="card-body">
+                                            <p class="card-text text-center"><?php echo htmlspecialchars($scan['qr_content']); ?></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endwhile; ?>
                         </div>
                     <?php else: ?>
                         <p>You haven't scanned any QR codes yet.</p>

@@ -10,9 +10,25 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $content = isset($_POST['content']) ? $_POST['content'] : uniqid('QR_', true);
     $points = isset($_POST['points']) ? (int)$_POST['points'] : 20;
+    
+    // Handle badge upload
+    $badge = null;
+    if (isset($_FILES['badge']) && $_FILES['badge']['error'] == 0) {
+        $target_dir = "../../uploads/qr_badge/";
+        $file_extension = strtolower(pathinfo($_FILES["badge"]["name"], PATHINFO_EXTENSION));
+        $badge = uniqid('badge_', true) . '.' . $file_extension;
+        $target_file = $target_dir . $badge;
+        
+        if (move_uploaded_file($_FILES["badge"]["tmp_name"], $target_file)) {
+            $badge = $badge; // Keep the filename only
+        } else {
+            $success = false;
+            $message = "Error uploading badge image.";
+        }
+    }
 
-    $stmt = $conn->prepare("INSERT INTO qr_codes (content, points) VALUES (?, ?)");
-    $stmt->bind_param("si", $content, $points);
+    $stmt = $conn->prepare("INSERT INTO qr_codes (content, points, badge) VALUES (?, ?, ?)");
+    $stmt->bind_param("sis", $content, $points, $badge);
     
     if ($stmt->execute()) {
         $success = true;
@@ -82,14 +98,14 @@ ob_start();
 
             <div class="card mb-4">
                 <div class="card-body">
-                    <form method="POST" class="row g-3">
+                    <form method="POST" class="row g-3" enctype="multipart/form-data">
                         <div class="col-md-6">
                             <label for="content" class="form-label">QR Code Content</label>
                             <input type="text" class="form-control" id="content" name="content" placeholder="Enter content or leave blank for auto-generate">
                         </div>
                         <div class="col-md-4">
-                            <label for="points" class="form-label">Points</label>
-                            <input type="number" class="form-control" id="points" name="points" value="20" min="1">
+                            <label for="badge" class="form-label">Badge Image</label>
+                            <input type="file" class="form-control" id="badge" name="badge" accept="image/*">
                         </div>
                         <div class="col-md-2">
                             <label class="form-label">&nbsp;</label>
