@@ -29,23 +29,21 @@ $result = $conn->query($sql);
     <style>
         .search-container {
             position: relative;
-            display: flex;
-            align-items: center;
             margin-right: 20px;
+            width: 250px;
         }
         .search-input {
-            display: none;
+            width: 100%;
             padding: 8px 35px 8px 15px;
             border: 1px solid #ddd;
             border-radius: 20px;
-            margin-right: 10px;
             transition: all 0.3s ease;
         }
-        .search-input.active {
-            display: block;
-            width: 250px;
-        }
         .search-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
             cursor: pointer;
             font-size: 1.2rem;
             color: #555;
@@ -119,14 +117,6 @@ $result = $conn->query($sql);
         document.addEventListener('DOMContentLoaded', function() {
             const searchIcon = document.getElementById('searchIcon');
             const searchInput = document.getElementById('searchInput');
-            
-            // Toggle search input visibility
-            searchIcon.addEventListener('click', function() {
-                searchInput.classList.toggle('active');
-                if (searchInput.classList.contains('active')) {
-                    searchInput.focus();
-                }
-            });
 
             // Handle search when user types
             searchInput.addEventListener('keypress', function(e) {
@@ -148,12 +138,10 @@ $result = $conn->query($sql);
                 }
             });
 
-            // If there's a search parameter in URL, show the search input and populate it
+            // If there's a search parameter in URL, populate the search input
             const urlParams = new URLSearchParams(window.location.search);
-            const searchParam = urlParams.get('search');
-            if (searchParam) {
-                searchInput.classList.add('active');
-                searchInput.value = searchParam;
+            if (urlParams.has('search')) {
+                searchInput.value = urlParams.get('search');
             }
         });
     </script>

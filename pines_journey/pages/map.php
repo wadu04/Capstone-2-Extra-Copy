@@ -1,8 +1,8 @@
 <?php
 require_once '../includes/config.php';
 
-// Fetch tourist spots for markers
-$sql = "SELECT * FROM tourist_spots";
+// Fetch tourist spots for markers and sort them alphabetically
+$sql = "SELECT * FROM tourist_spots ORDER BY name ASC";
 $result = $conn->query($sql);
 $spots = [];
 while ($row = $result->fetch_assoc()) {
@@ -20,7 +20,7 @@ while ($row = $result->fetch_assoc()) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         #map {
-            height: 600px;
+            height: 450px;
             width: 100%;
             border-radius: 10px;
             box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
@@ -40,16 +40,22 @@ while ($row = $result->fetch_assoc()) {
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">Tourist Spots</h5>
-                        <div class="list-group" id="spots-list">
-                            <?php foreach ($spots as $spot): ?>
-                                <a href="#" class="list-group-item list-group-item-action" 
-                                   data-lat="<?php echo $spot['latitude']; ?>" 
-                                   data-lng="<?php echo $spot['longitude']; ?>"
-                                   onclick="centerMap(<?php echo $spot['latitude']; ?>, <?php echo $spot['longitude']; ?>)">
-                                    <?php echo $spot['name']; ?>
-                                </a>
-                            <?php endforeach; ?>
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" id="spotSearch" placeholder="Search spots...">
+                            <button class="btn btn-outline-secondary" type="button" id="searchBtn">
+                                <i class="fas fa-search"></i>
+                            </button>
                         </div>
+                        <select class="form-select" id="spots-list" style="max-height: 400px; overflow-y: auto;">
+                            <option value="" selected disabled>Select a tourist spot...</option>
+                            <?php foreach ($spots as $spot): ?>
+                                <option value="<?php echo $spot['spot_id']; ?>" 
+                                        data-lat="<?php echo $spot['latitude']; ?>" 
+                                        data-lng="<?php echo $spot['longitude']; ?>">
+                                    <?php echo $spot['name']; ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -63,6 +69,7 @@ while ($row = $result->fetch_assoc()) {
     <script>
         let map;
         let markers = [];
+        let currentInfoWindow = null;
         const spots = <?php echo json_encode($spots); ?>;
 
         function initMap() {
@@ -99,6 +106,7 @@ while ($row = $result->fetch_assoc()) {
                         <div class="info-window">
                             <h5>${spot.name}</h5>
                             <p>${spot.description}</p>
+                            <p><strong>Location:</strong> ${spot.location}</p>
                             <p><strong>Opening Hours:</strong> ${spot.opening_hours}</p>
                             <p><strong>Entrance Fee:</strong> ₱${spot.entrance_fee}</p>
                             <a href="spots.php?id=${spot.spot_id}" class="btn btn-sm btn-primary">View Details</a>
@@ -107,10 +115,21 @@ while ($row = $result->fetch_assoc()) {
                 });
 
                 marker.addListener("click", () => {
+                    if (currentInfoWindow) {
+                        currentInfoWindow.close();
+                    }
                     infowindow.open(map, marker);
+                    currentInfoWindow = infowindow;
                 });
 
-                markers.push(marker);
+                markers.push({ marker, spot });
+            });
+
+            // Close info window when clicking on the map
+            map.addListener("click", () => {
+                if (currentInfoWindow) {
+                    currentInfoWindow.close();
+                }
             });
         }
 
@@ -119,15 +138,54 @@ while ($row = $result->fetch_assoc()) {
             map.setCenter(position);
             map.setZoom(16);
 
+            // Close current info window if open
+            if (currentInfoWindow) {
+                currentInfoWindow.close();
+            }
+
             // Find and trigger click on the corresponding marker
-            const marker = markers.find(m => 
-                m.getPosition().lat() === position.lat && 
-                m.getPosition().lng() === position.lng
+            const markerObj = markers.find(m => 
+                m.marker.getPosition().lat() === position.lat && 
+                m.marker.getPosition().lng() === position.lng
             );
-            if (marker) {
-                google.maps.event.trigger(marker, 'click');
+            if (markerObj) {
+                google.maps.event.trigger(markerObj.marker, 'click');
             }
         }
+
+        // Search functionality
+        document.getElementById('spotSearch').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const spotsList = document.getElementById('spots-list');
+            const options = spotsList.getElementsByTagName('option');
+            
+            Array.from(options).forEach(option => {
+                if (option.value === "") return; // Skip the placeholder option
+                const text = option.textContent.toLowerCase();
+                option.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
+
+        document.getElementById('searchBtn').addEventListener('click', function() {
+            const searchInput = document.getElementById('spotSearch');
+            const searchTerm = searchInput.value.toLowerCase();
+            const spotsList = document.getElementById('spots-list');
+            const options = spotsList.getElementsByTagName('option');
+            
+            Array.from(options).forEach(option => {
+                if (option.value === "") return; // Skip the placeholder option
+                const text = option.textContent.toLowerCase();
+                option.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
+
+        // Add change event listener for the dropdown
+        document.getElementById('spots-list').addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const lat = parseFloat(selectedOption.dataset.lat);
+            const lng = parseFloat(selectedOption.dataset.lng);
+            centerMap(lat, lng);
+        });
     </script>
 </body>
 </html>
