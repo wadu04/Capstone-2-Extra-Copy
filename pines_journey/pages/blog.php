@@ -116,7 +116,7 @@ $result = $conn->query($sql);
         }
         .card-img-top {
             width: 100%;
-            height: 250px; /* Fixed height for all images */
+            height: 270px; /* Fixed height for all images */
             object-fit: cover; /* This ensures the image covers the area without distortion */
         }
         .card {
