@@ -28,7 +28,7 @@ $result = $stmt->get_result();
 $spot = $result->fetch_assoc();
 
 // Get all reviews for this spot
-$sql = "SELECT r.*, u.username, u.profile_picture 
+$sql = "SELECT r.*, u.username, u.profile_picture, r.image_url 
         FROM reviews r 
         JOIN users u ON r.user_id = u.user_id 
         WHERE r.spot_id = ? 
@@ -223,7 +223,7 @@ if (!$spot) {
                             aria-label="Close">
                     </button>
                 </div>
-                <form id="reviewForm" action="../includes/submit_review.php" method="POST">
+                <form id="reviewForm" action="../includes/submit_review.php" method="POST" enctype="multipart/form-data">
                     <div class="modal-body">
                         <input type="hidden" name="spot_id" value="<?php echo $spot_id; ?>">
                         <div class="mb-3 text-center">
@@ -237,6 +237,10 @@ if (!$spot) {
                         <div class="mb-3">
                             <label for="comment" class="form-label">Your Review (Optional)</label>
                             <textarea class="form-control" id="comment" name="comment" rows="3" placeholder="Share your experience..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="review_image" class="form-label">Add a Photo (Optional)</label>
+                            <input type="file" class="form-control" id="review_image" name="review_image" accept="image/*">
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -344,12 +348,34 @@ if (!$spot) {
                                 <?php if ($review['comment']): ?>
                                 <p class="mb-0"><?php echo htmlspecialchars($review['comment']); ?></p>
                                 <?php endif; ?>
+                                <?php if (!empty($review['image_url'])): ?>
+                                <div class="mt-2">
+                                    <img src="<?php echo '../uploads/review_pic/' . $review['image_url']; ?>" 
+                                         alt="Review Image" 
+                                         class="img-fluid review-image" 
+                                         style="max-width: 200px; height: auto; cursor: pointer;"
+                                         data-bs-toggle="modal" 
+                                         data-bs-target="#imageModal"
+                                         onclick="showFullImage(this.src)">
+                                </div>
+                                <?php endif; ?>
                             </div>
                             <?php endwhile; ?>
                         <?php else: ?>
                             <p class="text-center">No reviews yet. Be the first to review!</p>
                         <?php endif; ?>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Modal -->
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content bg-transparent border-0">
+                <div class="modal-body text-center p-0">
+                    <img id="modalImage" src="" alt="Full size review image" class="img-fluid" style="max-height: 90vh;">
                 </div>
             </div>
         </div>
@@ -406,6 +432,10 @@ if (!$spot) {
                 });
             }
         });
+
+        function showFullImage(imageSrc) {
+            document.getElementById('modalImage').src = imageSrc;
+        }
     </script>
 </body>
 </html>

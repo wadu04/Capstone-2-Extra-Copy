@@ -140,6 +140,7 @@ CREATE TABLE `reviews` (
   `rating` int(1) NOT NULL CHECK (rating >= 1 AND rating <= 5),
   `comment` text NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `image_url` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`review_id`),
   KEY `user_id` (`user_id`),
   KEY `spot_id` (`spot_id`),

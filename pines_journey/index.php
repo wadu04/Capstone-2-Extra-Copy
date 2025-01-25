@@ -113,7 +113,7 @@ require_once 'includes/config.php';
         left: 0;
         width: 100%;
         height: 100%;
-        background-image: url('assets/css/images/herooo.jpg');
+        background-image: url('assets/css/images/new.jpg');
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
