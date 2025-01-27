@@ -329,6 +329,15 @@ if (!$spot) {
                                     <img src="../<?php echo $review['profile_picture']; ?>" alt="Profile" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
                                     <div class="flex-grow-1">
                                         <h6 class="mb-0"><?php echo htmlspecialchars($review['username']); ?></h6>
+                                        <div class="text-warning">
+                                            <?php for($i = 1; $i <= 5; $i++): ?>
+                                                <?php if($i <= $review['rating']): ?>
+                                                    <i class="fas fa-star"></i>
+                                                <?php else: ?>
+                                                    <i class="far fa-star"></i>
+                                                <?php endif; ?>
+                                            <?php endfor; ?>
+                                        </div>
                                         <small class="text-muted"><?php echo date('F j, Y', strtotime($review['created_at'])); ?></small>
                                     </div>
                                     <!-- Add 3-dot menu for report -->
