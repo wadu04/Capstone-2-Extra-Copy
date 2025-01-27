@@ -148,19 +148,6 @@ CREATE TABLE `reviews` (
   CONSTRAINT `reviews_ibfk_2` FOREIGN KEY (`spot_id`) REFERENCES `tourist_spots` (`spot_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-CREATE TABLE `review_reports` (
-  `report_id` int(11) NOT NULL AUTO_INCREMENT,
-  `review_id` int(11) NOT NULL,
-  `reporter_id` int(11) NOT NULL,
-  `reason` text NOT NULL,
-  `status` enum('pending','reviewed','dismissed') NOT NULL DEFAULT 'pending',
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`report_id`),
-  KEY `review_id` (`review_id`),
-  KEY `reporter_id` (`reporter_id`),
-  CONSTRAINT `review_reports_ibfk_1` FOREIGN KEY (`review_id`) REFERENCES `reviews` (`review_id`) ON DELETE CASCADE,
-  CONSTRAINT `review_reports_ibfk_2` FOREIGN KEY (`reporter_id`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `qr_codes` (`content`, `points`) VALUES
 ('TESTQR1', 20),

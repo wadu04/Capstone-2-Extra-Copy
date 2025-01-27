@@ -9,6 +9,9 @@ ob_start();
 $mark_read_query = "UPDATE admin_notifications SET is_read = TRUE WHERE is_read = FALSE";
 $conn->query($mark_read_query);
 
+// Get the current tab (default to blog reports)
+$current_tab = isset($_GET['tab']) ? $_GET['tab'] : 'blog';
+
 // Handle report actions
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
     if ($_POST['action'] === 'delete_content') {
@@ -21,13 +24,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
             $conn->begin_transaction();
 
             if ($content_type === 'post') {
-                // Delete the blog post only
+                // Delete the blog post
                 $stmt = $conn->prepare("DELETE FROM blogs WHERE blog_id = ?");
                 $stmt->bind_param("i", $content_id);
                 $stmt->execute();
-            } else {
-                // Delete the comment only
+            } elseif ($content_type === 'comment') {
+                // Delete the comment
                 $stmt = $conn->prepare("DELETE FROM comments WHERE comment_id = ?");
+                $stmt->bind_param("i", $content_id);
+                $stmt->execute();
+            } elseif ($content_type === 'review') {
+                // Delete the review
+                $stmt = $conn->prepare("DELETE FROM reviews WHERE review_id = ?");
                 $stmt->bind_param("i", $content_id);
                 $stmt->execute();
             }
@@ -41,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
             $conn->commit();
 
             // Redirect to refresh the page
-            header("Location: index.php");
+            header("Location: index.php?tab=" . $current_tab);
             exit();
         } catch (Exception $e) {
             // If there's an error, rollback changes
@@ -51,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
     }
 }
 
-// Get all reports with related information
+// Get reports based on content type
 $sql = "SELECT r.*, u.username as reporter_name, 
         CASE 
             WHEN r.content_type = 'post' THEN (
@@ -59,10 +67,15 @@ $sql = "SELECT r.*, u.username as reporter_name,
                 FROM blogs b 
                 WHERE b.blog_id = r.content_id
             )
-            ELSE (
+            WHEN r.content_type = 'comment' THEN (
                 SELECT c.comment_id
                 FROM comments c 
                 WHERE c.comment_id = r.content_id
+            )
+            ELSE (
+                SELECT rv.review_id
+                FROM reviews rv 
+                WHERE rv.review_id = r.content_id
             )
         END as content_exists,
         CASE 
@@ -72,11 +85,18 @@ $sql = "SELECT r.*, u.username as reporter_name,
                 JOIN users u2 ON b.user_id = u2.user_id 
                 WHERE b.blog_id = r.content_id
             )
-            ELSE (
+            WHEN r.content_type = 'comment' THEN (
                 SELECT CONCAT(SUBSTRING(c.content, 1, 50), '... by ', u2.username)
                 FROM comments c 
                 JOIN users u2 ON c.user_id = u2.user_id 
                 WHERE c.comment_id = r.content_id
+            )
+            ELSE (
+                SELECT CONCAT('Review by ', u2.username, ' for ', ts.name)
+                FROM reviews rv
+                JOIN users u2 ON rv.user_id = u2.user_id
+                JOIN tourist_spots ts ON rv.spot_id = ts.spot_id
+                WHERE rv.review_id = r.content_id
             )
         END as content_preview,
         CASE 
@@ -85,10 +105,15 @@ $sql = "SELECT r.*, u.username as reporter_name,
                 FROM blogs b 
                 WHERE b.blog_id = r.content_id
             )
-            ELSE (
+            WHEN r.content_type = 'comment' THEN (
                 SELECT c.content
                 FROM comments c 
                 WHERE c.comment_id = r.content_id
+            )
+            ELSE (
+                SELECT rv.comment
+                FROM reviews rv
+                WHERE rv.review_id = r.content_id
             )
         END as full_content,
         CASE 
@@ -97,18 +122,22 @@ $sql = "SELECT r.*, u.username as reporter_name,
                 FROM blogs b 
                 WHERE b.blog_id = r.content_id
             )
-            ELSE (
-                SELECT NULL
+            WHEN r.content_type = 'review' THEN (
+                SELECT rv.image_url
+                FROM reviews rv
+                WHERE rv.review_id = r.content_id
             )
-        END as image_url
+            ELSE NULL
+        END as content_image
         FROM reports r
         JOIN users u ON r.reporter_id = u.user_id
+        WHERE r.content_type " . ($current_tab === 'blog' ? "IN ('post', 'comment')" : "= 'review'") . "
         ORDER BY r.created_at DESC";
+
 $result = $conn->query($sql);
-$reports = [];
-while ($row = $result->fetch_assoc()) {
-    $reports[] = $row;
-}
+$reports = $result->fetch_all(MYSQLI_ASSOC);
+
+
 ?>
 
 <div class="container-fluid px-4">
@@ -118,75 +147,73 @@ while ($row = $result->fetch_assoc()) {
         </div>
     <?php endif; ?>
 
+    <h1 class="mt-4">Reports Management</h1>
     
+    <!-- Tab Navigation -->
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <a class="nav-link <?php echo $current_tab === 'blog' ? 'active' : ''; ?>" href="?tab=blog">
+                Blog Reports
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link <?php echo $current_tab === 'review' ? 'active' : ''; ?>" href="?tab=review">
+                Review Reports
+            </a>
+        </li>
+    </ul>
+
     <div class="card mb-4">
         <div class="card-header">
-            <i class="fas fa-flag me-1"></i>
-            Reported Content
+            <i class="fas fa-table me-1"></i>
+            <?php echo ucfirst($current_tab); ?> Reports
         </div>
         <div class="card-body">
-            <table class="table table-striped">
+            <table id="reportsTable" class="table table-striped">
                 <thead>
                     <tr>
-                        <th>Type</th>
-                        <th>Content</th>
-                        <th>Report Type</th>
                         <th>Reporter</th>
+                        <th>Type</th>
+                        <th>Content Preview</th>
+                        <th>Report Type</th>
                         <th>Description</th>
+                        <th>Status</th>
                         <th>Date</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($reports as $report): 
-                        $content_exists = !is_null($report['content_exists']);
-                    ?>
-                    <tr>
-                        <td><?php echo ucfirst($report['content_type']); ?></td>
-                        <td>
-                            <?php if (!$content_exists): ?>
-                                <span class="text-muted">[Content has been deleted]</span>
-                            <?php else: ?>
-                                <?php echo htmlspecialchars($report['content_preview']); ?>
-                            <?php endif; ?>
-                        </td>
-                        <td><?php echo ucfirst($report['report_type']); ?></td>
-                        <td><?php echo htmlspecialchars($report['reporter_name']); ?></td>
-                        <td><?php echo htmlspecialchars($report['description']); ?></td>
-                        <td><?php echo date('M d, Y h:i A', strtotime($report['created_at'])); ?></td>
-                        <td>
-                            <?php if ($content_exists): ?>
-                                <!-- View Button -->
-                                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" 
-                                        data-bs-target="#viewModal<?php echo $report['report_id']; ?>">
-                                    <i class="fas fa-eye"></i> View
+                    <?php foreach ($reports as $report): ?>
+                        <?php if ($report['content_exists']): ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars($report['reporter_name']); ?></td>
+                            <td><?php echo ucfirst($report['content_type']); ?></td>
+                            <td><?php echo htmlspecialchars($report['content_preview']); ?></td>
+                            <td><?php echo ucfirst(str_replace('_', ' ', $report['report_type'])); ?></td>
+                            <td><?php echo htmlspecialchars($report['description']); ?></td>
+                            <td>
+                                <span class="badge bg-<?php 
+                                    echo $report['status'] === 'pending' ? 'warning' : 
+                                        ($report['status'] === 'reviewed' ? 'info' : 'success'); 
+                                ?>">
+                                    <?php echo ucfirst($report['status']); ?>
+                                </span>
+                            </td>
+                            <td><?php echo date('Y-m-d H:i', strtotime($report['created_at'])); ?></td>
+                            <td>
+                                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#viewModal<?php echo $report['report_id']; ?>">
+                                    View
                                 </button>
-                                
-                                <!-- Delete Button -->
-                                <form action="index.php" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this content? This action cannot be undone.');">
+                                <form method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this content? This action cannot be undone.');">
                                     <input type="hidden" name="action" value="delete_content">
                                     <input type="hidden" name="report_id" value="<?php echo $report['report_id']; ?>">
                                     <input type="hidden" name="content_type" value="<?php echo $report['content_type']; ?>">
-                                    <input type="hidden" name="content_id" value="<?php echo $report['content_id']; ?>">
-                                    <button type="submit" class="btn btn-danger btn-sm">
-                                        <i class="fas fa-trash"></i> Delete
-                                    </button>
+                                    <input type="hidden" name="content_id" value="<?php echo $report['content_exists']; ?>">
+                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                                 </form>
-
-                            <?php else: ?>
-                                <!-- Delete Report Button -->
-                                <form action="index.php" method="POST" class="d-inline">
-                                    <input type="hidden" name="action" value="delete_content">
-                                    <input type="hidden" name="report_id" value="<?php echo $report['report_id']; ?>">
-                                    <input type="hidden" name="content_type" value="<?php echo $report['content_type']; ?>">
-                                    <input type="hidden" name="content_id" value="<?php echo $report['content_id']; ?>">
-                                    <button type="submit" class="btn btn-secondary btn-sm">
-                                        <i class="fas fa-times"></i> Dismiss Report
-                                    </button>
-                                </form>
-                            <?php endif; ?>
-                        </td>
-                    </tr>
+                            </td>
+                        </tr>
+                        <?php endif; ?>
                     <?php endforeach; ?>
                 </tbody>
             </table>
@@ -194,8 +221,9 @@ while ($row = $result->fetch_assoc()) {
     </div>
 </div>
 
+<!-- View Content Modals -->
 <?php foreach ($reports as $report): ?>
-<!-- View Modal -->
+<?php if ($report['content_exists']): ?>
 <div class="modal fade" id="viewModal<?php echo $report['report_id']; ?>" tabindex="-1" aria-labelledby="viewModalLabel<?php echo $report['report_id']; ?>" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -206,84 +234,24 @@ while ($row = $result->fetch_assoc()) {
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <?php if ($report['content_type'] === 'post'): ?>
-                    <?php 
-                        // Get blog post details
-                        $blog_id = $report['content_id'];
-                        $blog_query = "SELECT b.*, u.username, b.image_url,
-                                    (SELECT COUNT(*) FROM comments WHERE blog_id = b.blog_id) as comment_count
-                                    FROM blogs b 
-                                    JOIN users u ON b.user_id = u.user_id 
-                                    WHERE b.blog_id = ?";
-                        $stmt = $conn->prepare($blog_query);
-                        $stmt->bind_param("i", $blog_id);
-                        $stmt->execute();
-                        $blog = $stmt->get_result()->fetch_assoc();
-                        
-                        // Get comments for this blog
-                        $comments_query = "SELECT c.*, u.username 
-                                        FROM comments c 
-                                        JOIN users u ON c.user_id = u.user_id 
-                                        WHERE c.blog_id = ? 
-                                        ORDER BY c.created_at DESC";
-                        $stmt = $conn->prepare($comments_query);
-                        $stmt->bind_param("i", $blog_id);
-                        $stmt->execute();
-                        $comments = $stmt->get_result();
-                    ?>
-                    
-                    <div class="blog-post">
-                        <h3><?php echo htmlspecialchars($blog['title']); ?></h3>
-                        <p class="text-muted">Posted by <?php echo htmlspecialchars($blog['username']); ?> on <?php echo date('M d, Y h:i A', strtotime($blog['created_at'])); ?></p>
-                        
-                        <?php if (!empty($blog['image_url'])): ?>
-                        <div class="blog-image mb-3">
-                            <img src="../..<?php echo str_replace("..", "", htmlspecialchars($blog['image_url'])); ?>" class="img-fluid rounded" alt="Blog Image">
-                        </div>
-                        <?php endif; ?>
-                        
-                        <div class="blog-content">
-                            <?php echo nl2br(htmlspecialchars($blog['content'])); ?>
-                        </div>
-                        
-                        <hr>
-                        <h4>Comments (<?php echo $blog['comment_count']; ?>)</h4>
-                        <?php while ($comment = $comments->fetch_assoc()): ?>
-                            <div class="comment mb-3 p-3 border rounded">
-                                <p class="mb-1"><?php echo nl2br(htmlspecialchars($comment['content'])); ?></p>
-                                <small class="text-muted">
-                                    By <?php echo htmlspecialchars($comment['username']); ?> on 
-                                    <?php echo date('M d, Y h:i A', strtotime($comment['created_at'])); ?>
-                                </small>
-                            </div>
-                        <?php endwhile; ?>
-                    </div>
-                <?php else: ?>
-                    <?php 
-                        // Get comment details with associated blog post
-                        $comment_id = $report['content_id'];
-                        $comment_query = "SELECT c.*, u.username, b.title as blog_title, b.blog_id 
-                                        FROM comments c 
-                                        JOIN users u ON c.user_id = u.user_id 
-                                        JOIN blogs b ON c.blog_id = b.blog_id 
-                                        WHERE c.comment_id = ?";
-                        $stmt = $conn->prepare($comment_query);
-                        $stmt->bind_param("i", $comment_id);
-                        $stmt->execute();
-                        $comment = $stmt->get_result()->fetch_assoc();
-                    ?>
-                    
-                    <div class="comment-details">
-                        <h4>Comment on: <a href="#" class="text-decoration-none"><?php echo htmlspecialchars($comment['blog_title']); ?></a></h4>
-                        <div class="comment mb-3 p-3 border rounded">
-                            <p class="mb-1"><?php echo nl2br(htmlspecialchars($comment['content'])); ?></p>
-                            <small class="text-muted">
-                                By <?php echo htmlspecialchars($comment['username']); ?> on 
-                                <?php echo date('M d, Y h:i A', strtotime($comment['created_at'])); ?>
-                            </small>
-                        </div>
-                    </div>
+                <?php if ($report['content_image']): ?>
+                    <img src="../../<?php echo $report['content_image']; ?>" class="img-fluid mb-3" alt="Content Image">
                 <?php endif; ?>
+                
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">Content:</h6>
+                        <p class="card-text"><?php echo nl2br(htmlspecialchars($report['full_content'])); ?></p>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <h6>Report Details:</h6>
+                    <p><strong>Reporter:</strong> <?php echo htmlspecialchars($report['reporter_name']); ?></p>
+                    <p><strong>Report Type:</strong> <?php echo ucfirst(str_replace('_', ' ', $report['report_type'])); ?></p>
+                    <p><strong>Description:</strong> <?php echo htmlspecialchars($report['description']); ?></p>
+                    <p><strong>Date Reported:</strong> <?php echo date('Y-m-d H:i', strtotime($report['created_at'])); ?></p>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -291,10 +259,10 @@ while ($row = $result->fetch_assoc()) {
         </div>
     </div>
 </div>
+<?php endif; ?>
 <?php endforeach; ?>
 
 <?php
 $content = ob_get_clean();
-$page_title = "Report Management";
-require_once '../includes/admin_layout.php';
+include '../includes/admin_layout.php';
 ?>

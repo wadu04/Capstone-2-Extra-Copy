@@ -326,23 +326,21 @@ if (!$spot) {
                             <?php while ($review = $reviews->fetch_assoc()): ?>
                             <div class="border-bottom mb-3 pb-3">
                                 <div class="d-flex align-items-center mb-2">
-                                    <img src="../<?php echo $review['profile_picture']; ?>" class="rounded-circle me-2" width="40" height="40" alt="Profile Picture">
-                                    <div>
-                                        <strong><?php echo htmlspecialchars($review['username']); ?></strong>
-                                        <div class="text-warning">
-                                            <?php
-                                            for ($i = 1; $i <= 5; $i++) {
-                                                if ($i <= $review['rating']) {
-                                                    echo '<i class="fas fa-star review-star"></i>';
-                                                } else {
-                                                    echo '<i class="far fa-star review-star"></i>';
-                                                }
-                                            }
-                                            ?>
-                                            <small class="text-muted ms-2">
-                                                <?php echo date('M d, Y', strtotime($review['created_at'])); ?>
-                                            </small>
-                                        </div>
+                                    <img src="../<?php echo $review['profile_picture']; ?>" alt="Profile" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0"><?php echo htmlspecialchars($review['username']); ?></h6>
+                                        <small class="text-muted"><?php echo date('F j, Y', strtotime($review['created_at'])); ?></small>
+                                    </div>
+                                    <!-- Add 3-dot menu for report -->
+                                    <div class="dropdown">
+                                        <button class="btn btn-link text-dark" type="button" id="reviewMenu<?php echo $review['review_id']; ?>" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="reviewMenu<?php echo $review['review_id']; ?>">
+                                            <li><a class="dropdown-item" href="#" onclick="reportReview(<?php echo $review['review_id']; ?>, '<?php echo htmlspecialchars($review['username']); ?>')">
+                                                <i class="fas fa-flag me-2"></i>Report Review
+                                            </a></li>
+                                        </ul>
                                     </div>
                                 </div>
                                 <?php if ($review['comment']): ?>
@@ -366,6 +364,42 @@ if (!$spot) {
                         <?php endif; ?>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Review Modal -->
+    <div class="modal fade" id="reportReviewModal" tabindex="-1" aria-labelledby="reportReviewModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reportReviewModalLabel">Report Review</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="reportReviewForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="reportReviewId" name="review_id">
+                        <div class="mb-3">
+                            <label for="reportType" class="form-label">Report Type</label>
+                            <select class="form-select" id="reportType" name="report_type" required>
+                                <option value="">Select a reason</option>
+                                <option value="inappropriate">Inappropriate Content</option>
+                                <option value="spam">Spam</option>
+                                <option value="harassment">Harassment</option>
+                                <option value="false_information">False Information</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="reportDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="reportDescription" name="description" rows="3" required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Submit Report</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -436,6 +470,40 @@ if (!$spot) {
         function showFullImage(imageSrc) {
             document.getElementById('modalImage').src = imageSrc;
         }
+
+        function reportReview(reviewId, username) {
+            if (!<?php echo isset($_SESSION['user_id']) ? 'true' : 'false'; ?>) {
+                alert('Please login to report a review');
+                return;
+            }
+            document.getElementById('reportReviewId').value = reviewId;
+            document.getElementById('reportReviewModalLabel').textContent = `Report Review by ${username}`;
+            new bootstrap.Modal(document.getElementById('reportReviewModal')).show();
+        }
+
+        document.getElementById('reportReviewForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            fetch('../includes/submit_review_report.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Report submitted successfully');
+                    bootstrap.Modal.getInstance(document.getElementById('reportReviewModal')).hide();
+                    this.reset();
+                } else {
+                    alert(data.message || 'Error submitting report');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error submitting report');
+            });
+        });
     </script>
 </body>
 </html>
