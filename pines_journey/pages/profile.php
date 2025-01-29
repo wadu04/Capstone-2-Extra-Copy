@@ -57,6 +57,19 @@ $stmt->execute();
 $points_result = $stmt->get_result()->fetch_assoc();
 $total_points = $points_result ? $points_result['total_points'] : 0;
 
+// Fetch user's favorite blogs
+$stmt = $conn->prepare("
+    SELECT b.*, u.username as author_name 
+    FROM blogs b 
+    JOIN favorites f ON b.blog_id = f.blog_id 
+    JOIN users u ON b.user_id = u.user_id 
+    WHERE f.user_id = ? 
+    ORDER BY f.created_at DESC
+");
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$favorite_blogs = $stmt->get_result();
+
 // Fetch user's QR scans with badges
 $stmt = $conn->prepare("
     SELECT us.qr_content, qc.badge 
@@ -149,6 +162,28 @@ $scans = $stmt->get_result();
                     <?php else: ?>
                         <p>You haven't created any blog posts yet</p>
                         <a href="blog.php" class="btn btn-primary">Create Your First Blog</a>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Favorite Blogs -->
+                <div class="profile-section">
+                    <h3>My Favorite Blogs</h3>
+                    <?php if ($favorite_blogs->num_rows > 0): ?>
+                        <div class="list-group">
+                            <?php while ($blog = $favorite_blogs->fetch_assoc()): ?>
+                                <a href="blog-post.php?id=<?php echo $blog['blog_id']; ?>" 
+                                   class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h5 class="mb-1"><?php echo htmlspecialchars($blog['title']); ?></h5>
+                                        <small class="text-muted"><?php echo date('M j, Y', strtotime($blog['created_at'])); ?></small>
+                                    </div>
+                                    <p class="mb-1">By <?php echo htmlspecialchars($blog['author_name']); ?></p>
+                                </a>
+                            <?php endwhile; ?>
+                        </div>
+                    <?php else: ?>
+                        <p>You haven't favorited any blog posts yet</p>
+                        <a href="blog.php" class="btn btn-primary">Browse Blogs</a>
                     <?php endif; ?>
                 </div>
 
