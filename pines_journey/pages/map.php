@@ -14,7 +14,7 @@ while ($row = $result->fetch_assoc()) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Map - Pine's Journey</title>
+    <title> Map - Pine's Journey</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="../assets/css/style.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -31,7 +31,7 @@ while ($row = $result->fetch_assoc()) {
     <?php include '../includes/header.php'; ?>
 
     <div class="container py-4">
-        <h2 class="mb-4">Interactive Map of Baguio City</h2>
+        <h2 class="mb-4">Map of Baguio City</h2>
         <div class="row">
             <div class="col-md-9">
                 <div id="map"></div>
@@ -40,12 +40,6 @@ while ($row = $result->fetch_assoc()) {
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">Tourist Spots</h5>
-                        <div class="input-group mb-3">
-                            <input type="text" class="form-control" id="spotSearch" placeholder="Search spots...">
-                            <button class="btn btn-outline-secondary" type="button" id="searchBtn">
-                                <i class="fas fa-search"></i>
-                            </button>
-                        </div>
                         <select class="form-select" id="spots-list" style="max-height: 400px; overflow-y: auto;">
                             <option value="" selected disabled>Select a tourist spot...</option>
                             <?php foreach ($spots as $spot): ?>
@@ -65,7 +59,7 @@ while ($row = $result->fetch_assoc()) {
     <?php include '../includes/footer.php'; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=<?php echo GOOGLE_MAPS_API_KEY; ?>&callback=initMap" async defer></script>
+    <script async src="https://maps.googleapis.com/maps/api/js?key=<?php echo GOOGLE_MAPS_API_KEY; ?>&callback=initMap" async defer></script>
     <script>
         let map;
         let markers = [];
@@ -152,32 +146,6 @@ while ($row = $result->fetch_assoc()) {
                 google.maps.event.trigger(markerObj.marker, 'click');
             }
         }
-
-        // Search functionality
-        document.getElementById('spotSearch').addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            const spotsList = document.getElementById('spots-list');
-            const options = spotsList.getElementsByTagName('option');
-            
-            Array.from(options).forEach(option => {
-                if (option.value === "") return; // Skip the placeholder option
-                const text = option.textContent.toLowerCase();
-                option.style.display = text.includes(searchTerm) ? '' : 'none';
-            });
-        });
-
-        document.getElementById('searchBtn').addEventListener('click', function() {
-            const searchInput = document.getElementById('spotSearch');
-            const searchTerm = searchInput.value.toLowerCase();
-            const spotsList = document.getElementById('spots-list');
-            const options = spotsList.getElementsByTagName('option');
-            
-            Array.from(options).forEach(option => {
-                if (option.value === "") return; // Skip the placeholder option
-                const text = option.textContent.toLowerCase();
-                option.style.display = text.includes(searchTerm) ? '' : 'none';
-            });
-        });
 
         // Add change event listener for the dropdown
         document.getElementById('spots-list').addEventListener('change', function() {

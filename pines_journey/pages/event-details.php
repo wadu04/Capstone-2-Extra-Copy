@@ -39,39 +39,11 @@ if (!$event) {
 
         <div class="row">
             <div class="col-lg-8">
+                <h1 class="mb-4"><?php echo $event['title']; ?></h1>
+                
                 <?php if ($event['image_url']): ?>
                 <img src="<?php echo $event['image_url']; ?>" class="img-fluid rounded mb-4" alt="<?php echo $event['title']; ?>">
                 <?php endif; ?>
-
-                <h1 class="mb-4"><?php echo $event['title']; ?></h1>
-
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h5 class="text-primary">Event Schedule</h5>
-                                <div class="mb-3">
-                                    <strong>Starts:</strong><br>
-                                    <p>
-                                        <i class="far fa-calendar"></i> <?php echo date('F d, Y', strtotime($event['start_datetime'])); ?><br>
-                                        <i class="far fa-clock"></i> <?php echo date('h:i A', strtotime($event['start_datetime'])); ?>
-                                    </p>
-                                </div>
-                                <div class="mb-3">
-                                    <strong>Ends:</strong><br>
-                                    <p>
-                                        <i class="far fa-calendar"></i> <?php echo date('F d, Y', strtotime($event['end_datetime'])); ?><br>
-                                        <i class="far fa-clock"></i> <?php echo date('h:i A', strtotime($event['end_datetime'])); ?>
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <h5 class="text-primary">Location</h5>
-                                <p><i class="fas fa-map-marker-alt"></i> <?php echo $event['location']; ?></p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
                 <div class="mb-4">
                     <h5 class="text-primary">About This Event</h5>
@@ -90,6 +62,33 @@ if (!$event) {
             </div>
 
             <div class="col-lg-4">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="text-primary">Event Schedule</h5>
+                        <div class="mb-3">
+                            <strong>Starts:</strong><br>
+                            <p>
+                                <i class="far fa-calendar"></i> <?php echo date('F d, Y', strtotime($event['start_datetime'])); ?><br>
+                                <i class="far fa-clock"></i> <?php echo date('h:i A', strtotime($event['start_datetime'])); ?>
+                            </p>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Ends:</strong><br>
+                            <p>
+                                <i class="far fa-calendar"></i> <?php echo date('F d, Y', strtotime($event['end_datetime'])); ?><br>
+                                <i class="far fa-clock"></i> <?php echo date('h:i A', strtotime($event['end_datetime'])); ?>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="text-primary">Location</h5>
+                        <p><i class="fas fa-map-marker-alt"></i> <?php echo $event['location']; ?></p>
+                    </div>
+                </div>
+
                 <div class="card mb-4">
                     <div class="card-body">
                         <h5 class="text-primary">Ticket Information</h5>

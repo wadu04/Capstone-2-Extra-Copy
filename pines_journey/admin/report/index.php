@@ -235,7 +235,7 @@ $reports = $result->fetch_all(MYSQLI_ASSOC);
             </div>
             <div class="modal-body">
                 <?php if ($report['content_image']): ?>
-                    <img src="../../<?php echo $report['content_image']; ?>" class="img-fluid mb-3" alt="Content Image">
+                    <img src="../<?php echo $report['content_image']; ?>" class="img-fluid mb-3" alt="Content Image">
                 <?php endif; ?>
                 
                 <div class="card">

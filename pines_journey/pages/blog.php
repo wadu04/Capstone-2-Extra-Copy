@@ -91,11 +91,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isLoggedIn()) {
 // Get blog posts with user info, favorite counts, and profile pictures
 $sql = "SELECT b.*, u.username, u.profile_picture,
         (SELECT COUNT(*) FROM favorites WHERE blog_id = b.blog_id) as favorite_count,
+        " . (isLoggedIn() ? "(SELECT COUNT(*) FROM favorites WHERE blog_id = b.blog_id AND user_id = " . $_SESSION['user_id'] . ") as is_favorited" : "0 as is_favorited") . ",
         (SELECT COUNT(*) FROM comments WHERE blog_id = b.blog_id) as comment_count
         FROM blogs b
-        JOIN users u ON b.user_id = u.user_id
-        ORDER BY b.created_at DESC";
-$result = $conn->query($sql);
+        JOIN users u ON b.user_id = u.user_id";
+
+// Add search functionality
+if (isset($_GET['search']) && !empty($_GET['search'])) {
+    $search = '%' . $conn->real_escape_string($_GET['search']) . '%';
+    $sql .= " WHERE b.title LIKE ? OR b.content LIKE ?";
+}
+
+$sql .= " ORDER BY b.created_at DESC";
+
+if (isset($_GET['search']) && !empty($_GET['search'])) {
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ss", $search, $search);
+    $stmt->execute();
+    $result = $stmt->get_result();
+} else {
+    $result = $conn->query($sql);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -116,11 +132,52 @@ $result = $conn->query($sql);
         }
         .card-img-top {
             width: 100%;
-            height: 270px; /* Fixed height for all images */
-            object-fit: cover; /* This ensures the image covers the area without distortion */
+            height: 270px;
+            object-fit: cover;
         }
         .card {
-            height: auto; /* Let the card adjust to content */
+            height: auto;
+        }
+        .favorite-btn {
+            cursor: pointer;
+        }
+        .favorite-btn.active {
+            color: #dc3545;
+        }
+        .favorite-btn i {
+            transition: color 0.3s ease;
+        }
+        .search-container {
+            position: relative;
+            width: 350px;
+            margin: 0 auto 2rem auto;
+        }
+        .search-input {
+            width: 100%;
+            padding: 8px 35px 8px 15px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: #0d6efd;
+            box-shadow: 0 3px 8px rgba(13,110,253,0.2);
+        }
+        .search-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 1.1rem;
+            color: #555;
+            transition: color 0.3s ease;
+        }
+        .search-icon:hover {
+            color: #0d6efd;
         }
     </style>
 </head>
@@ -135,6 +192,12 @@ $result = $conn->query($sql);
                 <i class="fas fa-plus"></i> Create Post
             </button>
             <?php endif; ?>
+        </div>
+
+        <!-- Centered Search Container -->
+        <div class="search-container">
+            <input type="text" class="search-input" id="searchInput" placeholder="Search blogs...">
+            <i class="fas fa-search search-icon" id="searchIcon"></i>
         </div>
 
         <div class="row g-4">
@@ -171,9 +234,18 @@ $result = $conn->query($sql);
                         <p class="card-text"><?php echo substr(htmlspecialchars($blog['content']), 0, 150); ?>...</p>
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
+                                <?php if (isLoggedIn()): ?>
+                                <span class="me-3 favorite-btn <?php echo $blog['is_favorited'] ? 'active' : ''; ?>" 
+                                      data-blog-id="<?php echo $blog['blog_id']; ?>" 
+                                      onclick="toggleFavorite(this, <?php echo $blog['blog_id']; ?>)">
+                                    <i class="<?php echo $blog['is_favorited'] ? 'fas' : 'far'; ?> fa-heart"></i>
+                                    <span class="favorite-count"><?php echo $blog['favorite_count']; ?></span>
+                                </span>
+                                <?php else: ?>
                                 <span class="me-3">
                                     <i class="far fa-heart"></i> <?php echo $blog['favorite_count']; ?>
                                 </span>
+                                <?php endif; ?>
                                 <span>
                                     <i class="far fa-comment"></i> <?php echo $blog['comment_count']; ?>
                                 </span>
@@ -364,6 +436,65 @@ $result = $conn->query($sql);
                 });
             }
         });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchIcon = document.getElementById('searchIcon');
+            const searchInput = document.getElementById('searchInput');
+
+            // Handle search when user types
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    const searchTerm = searchInput.value.trim();
+                    if (searchTerm) {
+                        window.location.href = `blog.php?search=${encodeURIComponent(searchTerm)}`;
+                    } else {
+                        window.location.href = 'blog.php';
+                    }
+                }
+            });
+
+            // Clear search and return to main page when input is cleared
+            searchInput.addEventListener('input', function() {
+                if (this.value.trim() === '' && new URLSearchParams(window.location.search).has('search')) {
+                    window.location.href = 'blog.php';
+                }
+            });
+
+            // If there's a search parameter in URL, populate the search input
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('search')) {
+                searchInput.value = urlParams.get('search');
+            }
+        });
+
+        function toggleFavorite(element, blogId) {
+            if (!element) return;
+            
+            fetch('blog.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `action=toggle_favorite&blog_id=${blogId}`
+            })
+            .then(response => response.text())
+            .then(() => {
+                // Toggle active class
+                element.classList.toggle('active');
+                
+                // Toggle heart icon
+                const heartIcon = element.querySelector('i');
+                heartIcon.classList.toggle('far');
+                heartIcon.classList.toggle('fas');
+                
+                // Update favorite count
+                const countElement = element.querySelector('.favorite-count');
+                let currentCount = parseInt(countElement.textContent);
+                countElement.textContent = element.classList.contains('active') ? currentCount + 1 : currentCount - 1;
+            })
+            .catch(error => console.error('Error:', error));
+        }
     </script>
 </body>
 </html>

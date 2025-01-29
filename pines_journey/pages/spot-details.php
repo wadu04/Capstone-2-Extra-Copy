@@ -101,109 +101,105 @@ if (!$spot) {
             </ol>
         </nav>
 
-        <div class="card shadow-sm">
-            <div class="row g-0">
-                <div class="col-md-6">
-                    <?php
-                    // Collect all available images
-                    $images = array();
-                    if (!empty($spot['img2'])) $images[] = $spot['img2'];
-                    if (!empty($spot['img3'])) $images[] = $spot['img3'];
-                    if (!empty($spot['img4'])) $images[] = $spot['img4'];
-                    
-                    if (count($images) > 0):
-                    ?>
-                    <div id="spotCarousel" class="carousel slide" data-bs-ride="carousel">
-                        <div class="carousel-indicators">
-                            <?php for($i = 0; $i < count($images); $i++): ?>
-                            <button type="button" 
-                                    data-bs-target="#spotCarousel" 
-                                    data-bs-slide-to="<?php echo $i; ?>" 
-                                    <?php echo $i === 0 ? 'class="active" aria-current="true"' : ''; ?>
-                                    aria-label="Slide <?php echo $i + 1; ?>">
-                            </button>
-                            <?php endfor; ?>
-                        </div>
-                        <div class="carousel-inner rounded-start">
-                            <?php foreach($images as $index => $image): ?>
-                            <div class="carousel-item <?php echo $index === 0 ? 'active' : ''; ?>">
-                                <img src="<?php echo $image; ?>" class="d-block" alt="Tourist spot image <?php echo $index + 1; ?>">
-                            </div>
-                            <?php endforeach; ?>
-                        </div>
-                        <?php if(count($images) > 1): ?>
-                        <button class="carousel-control-prev" type="button" data-bs-target="#spotCarousel" data-bs-slide="prev">
-                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                            <span class="visually-hidden">Previous</span>
+        <div class="mb-4">
+            <h2 class="display-5 mb-2"><?php echo $spot['name']; ?></h2>
+            <div class="text-warning mb-3">
+                <?php
+                $rating = $spot['avg_rating'];
+                for ($i = 1; $i <= 5; $i++) {
+                    if ($i <= floor($rating)) {
+                        echo '<i class="fas fa-star"></i>';
+                    } elseif ($i - $rating <= 0.5 && $i - $rating > 0) {
+                        echo '<i class="fas fa-star-half-alt"></i>';
+                    } else {
+                        echo '<i class="far fa-star"></i>';
+                    }
+                }
+                ?>
+                <span class="text-muted ms-2">
+                    (<?php echo number_format($spot['avg_rating'], 1); ?>) 
+                    <?php echo $spot['review_count']; ?> review<?php echo $spot['review_count'] != 1 ? 's' : ''; ?>
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#allReviewsModal">See all</a>
+                </span>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <?php
+                // Collect all available images
+                $images = array();
+                if (!empty($spot['img2'])) $images[] = $spot['img2'];
+                if (!empty($spot['img3'])) $images[] = $spot['img3'];
+                if (!empty($spot['img4'])) $images[] = $spot['img4'];
+                
+                if (count($images) > 0):
+                ?>
+                <div id="spotCarousel" class="carousel slide shadow-sm rounded" data-bs-ride="carousel">
+                    <div class="carousel-indicators">
+                        <?php for($i = 0; $i < count($images); $i++): ?>
+                        <button type="button" 
+                                data-bs-target="#spotCarousel" 
+                                data-bs-slide-to="<?php echo $i; ?>" 
+                                <?php echo $i === 0 ? 'class="active" aria-current="true"' : ''; ?>
+                                aria-label="Slide <?php echo $i + 1; ?>">
                         </button>
-                        <button class="carousel-control-next" type="button" data-bs-target="#spotCarousel" data-bs-slide="next">
-                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                            <span class="visually-hidden">Next</span>
-                        </button>
-                        <?php endif; ?>
+                        <?php endfor; ?>
                     </div>
-                    <?php else: ?>
-                        <?php if ($spot['image_url']): ?>
-                        <img src="<?php echo $spot['image_url']; ?>" class="img-fluid rounded-start" alt="<?php echo $spot['name']; ?>" style="width: 100%; height: 400px; object-fit: cover;">
-                        <?php endif; ?>
+                    <div class="carousel-inner rounded-start">
+                        <?php foreach($images as $index => $image): ?>
+                        <div class="carousel-item <?php echo $index === 0 ? 'active' : ''; ?>">
+                            <img src="<?php echo $image; ?>" class="d-block" alt="Tourist spot image <?php echo $index + 1; ?>">
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php if(count($images) > 1): ?>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#spotCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Previous</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#spotCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Next</span>
+                    </button>
                     <?php endif; ?>
                 </div>
-                <div class="col-md-6">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <h2 class="card-title"><?php echo $spot['name']; ?></h2>
-                                <div class="mb-3">
-                                    <div class="text-warning">
-                                        <?php
-                                        $rating = $spot['avg_rating']; // Don't round it
-                                        for ($i = 1; $i <= 5; $i++) {
-                                            if ($i <= floor($rating)) {
-                                                echo '<i class="fas fa-star"></i>';
-                                            } elseif ($i - $rating <= 0.5 && $i - $rating > 0) {
-                                                echo '<i class="fas fa-star-half-alt"></i>';
-                                            } else {
-                                                echo '<i class="far fa-star"></i>';
-                                            }
-                                        }
-                                        ?>
-                                        <span class="text-muted ms-2">
-                                            (<?php echo number_format($spot['avg_rating'], 1); ?>) 
-                                            <?php echo $spot['review_count']; ?> review<?php echo $spot['review_count'] != 1 ? 's' : ''; ?>
-                                            <a href="#" data-bs-toggle="modal" data-bs-target="#allReviewsModal">See all</a>
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <p class="card-text">
+                <?php else: ?>
+                    <?php if ($spot['image_url']): ?>
+                    <img src="<?php echo $spot['image_url']; ?>" class="img-fluid rounded shadow-sm" alt="<?php echo $spot['name']; ?>" style="width: 100%; height: 400px; object-fit: cover;">
+                    <?php endif; ?>
+                <?php endif; ?>
+            </div>
+            <div class="col-md-6">
+                <div class="ps-md-4">
+                    <div class="mb-4">
+                        <p class="fs-5 mb-4">
                             <i class="fas fa-map-marker-alt text-primary"></i> <?php echo $spot['location']; ?>
                         </p>
                         
                         <div class="mb-4">
-                            <h5 class="text-primary">Opening Hours</h5>
-                            <p><?php echo $spot['opening_hours']; ?></p>
+                            <h5 class="text-primary border-bottom pb-2">Opening Hours</h5>
+                            <p class="ms-3"><?php echo $spot['opening_hours']; ?></p>
                             
-                            <h5 class="text-primary">Entrance Fee</h5>
-                            <p>₱<?php echo number_format($spot['entrance_fee'], 2); ?></p>
+                            <h5 class="text-primary border-bottom pb-2">Entrance Fee</h5>
+                            <p class="ms-3">₱<?php echo number_format($spot['entrance_fee'], 2); ?></p>
+
+                            <h5 class="text-primary border-bottom pb-2">Description</h5>
+                            <p class="ms-3"><?php echo $spot['description']; ?></p>
+                            
+                            <h5 class="text-primary border-bottom pb-2">Tips for Visitors</h5>
+                            <p class="ms-3"><?php echo $spot['tips']; ?></p>
                         </div>
 
-                        <h5 class="text-primary">Description</h5>
-                        <p class="card-text"><?php echo $spot['description']; ?></p>
-                        
-                        <h5 class="text-primary">Tips for Visitors</h5>
-                        <p class="card-text"><?php echo $spot['tips']; ?></p>
-                        
-                        <div class="mt-4">
-                            <a href="map.php?spot=<?php echo $spot['spot_id']; ?>" class="btn btn-primary">
-                                <i class="fas fa-map-marker-alt"></i> View on Map
-                            </a>
-                        </div>
+                        <a href="map.php?spot=<?php echo $spot['spot_id']; ?>" class="btn btn-primary">
+                            <i class="fas fa-map-marker-alt"></i> View on Map
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
+
+   
     </div>
 
     <!-- Review Modal -->
