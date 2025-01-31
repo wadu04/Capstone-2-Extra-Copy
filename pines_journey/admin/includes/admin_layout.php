@@ -58,7 +58,7 @@ if (!isset($content)) {
                 <a href="../qr_generate/qr-generate.php" class="list-group-item list-group-item-action bg-dark text-white">
                     <i class="fas fa-qrcode me-2"></i> QR Generate
                 </a>
-                <a href="../games/index.php" class="list-group-item list-group-item-action bg-dark text-white">
+                <a href="../rewards/index.php" class="list-group-item list-group-item-action bg-dark text-white">
                     <i class="fas fa-gamepad me-2"></i>Rewards
                 </a>
                 <a href="../report/index.php" class="list-group-item list-group-item-action bg-dark text-white">

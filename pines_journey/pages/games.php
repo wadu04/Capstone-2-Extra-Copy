@@ -105,14 +105,24 @@ require_once '../includes/config.php';
     <?php include '../includes/header.php'; ?>
 
     <div class="games-container py-4">
-        <div class="nav-buttons text-center">
-            <a href="games.php" class="btn btn-primary">Games</a>
-            <a href="leaderboard.php" class="btn btn-outline-primary">Earned Badge</a>
-        </div>
-        
-        <div class="games-header">
-            <h2> Fun Games</h2>
-            <p>Test your knowledge and have fun with our collection of interactive games about Baguio City!</p>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="m-0">Fun Games</h2>
+            <div class="dropdown">
+                <button class="btn position-relative" type="button" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="background: none; border: none;">
+                    <i class="fas fa-bell text-dark"></i>
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger notification-badge" style="display: none;">
+                        0
+                    </span>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end p-3" aria-labelledby="notificationDropdown" style="min-width: 300px; max-height: 400px; overflow-y: auto;">
+                    <div id="notificationContainer">
+                        <div class="text-center text-muted empty-notification">
+                            <i class="fas fa-inbox fa-2x mb-2"></i>
+                            <p>Scan QR codes and Create a blog post in order to get reward</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         
         <div class="row g-3">
@@ -220,5 +230,7 @@ require_once '../includes/config.php';
 
     <?php include '../includes/footer.php'; ?>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="../assets/js/notifications.js"></script>
 </body>
 </html>
