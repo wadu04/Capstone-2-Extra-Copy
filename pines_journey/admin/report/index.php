@@ -59,6 +59,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
     }
 }
 
+// Pagination settings
+$items_per_page = 5;
+$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$offset = ($page - 1) * $items_per_page;
+
+// Get total number of reports for current tab
+$count_query = "SELECT COUNT(*) as count FROM reports WHERE content_type " . 
+    ($current_tab === 'blog' ? "IN ('post', 'comment')" : "= 'review'");
+$total_reports = $conn->query($count_query)->fetch_assoc()['count'];
+$total_pages = ceil($total_reports / $items_per_page);
+
 // Get reports based on content type
 $sql = "SELECT r.*, u.username as reporter_name, 
         CASE 
@@ -132,11 +143,14 @@ $sql = "SELECT r.*, u.username as reporter_name,
         FROM reports r
         JOIN users u ON r.reporter_id = u.user_id
         WHERE r.content_type " . ($current_tab === 'blog' ? "IN ('post', 'comment')" : "= 'review'") . "
-        ORDER BY r.created_at DESC";
+        ORDER BY r.created_at DESC
+        LIMIT ? OFFSET ?";
 
-$result = $conn->query($sql);
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("ii", $items_per_page, $offset);
+$stmt->execute();
+$result = $stmt->get_result();
 $reports = $result->fetch_all(MYSQLI_ASSOC);
-
 
 ?>
 
@@ -217,6 +231,33 @@ $reports = $result->fetch_all(MYSQLI_ASSOC);
                     <?php endforeach; ?>
                 </tbody>
             </table>
+
+            <!-- Pagination -->
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    <?php if ($page > 1): ?>
+                        <li class="page-item">
+                            <a class="page-link" href="?tab=<?php echo $current_tab; ?>&page=<?php echo ($page - 1); ?>" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    <?php endif; ?>
+                    
+                    <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                        <li class="page-item <?php echo $i === $page ? 'active' : ''; ?>">
+                            <a class="page-link" href="?tab=<?php echo $current_tab; ?>&page=<?php echo $i; ?>"><?php echo $i; ?></a>
+                        </li>
+                    <?php endfor; ?>
+                    
+                    <?php if ($page < $total_pages): ?>
+                        <li class="page-item">
+                            <a class="page-link" href="?tab=<?php echo $current_tab; ?>&page=<?php echo ($page + 1); ?>" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    <?php endif; ?>
+                </ul>
+            </nav>
         </div>
     </div>
 </div>

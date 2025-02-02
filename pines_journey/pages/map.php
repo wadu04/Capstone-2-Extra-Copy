@@ -24,6 +24,28 @@ while ($row = $result->fetch_assoc()) {
             width: 100%;
             border-radius: 10px;
             box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        .search-container {
+            position: relative;
+            margin-right: 20px;
+            width: 250px;
+        }
+        .search-input {
+            width: 100%;
+            padding: 8px 35px 8px 15px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+        .search-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: #555;
         }
     </style>
 </head>
@@ -31,7 +53,13 @@ while ($row = $result->fetch_assoc()) {
     <?php include '../includes/header.php'; ?>
 
     <div class="container py-4">
-        <h2 class="mb-4">Map of Baguio City</h2>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Map of Baguio City</h2>
+            <div class="search-container">
+                <input type="text" class="search-input" id="pac-input" placeholder="Search places...">
+                <i class="fas fa-search search-icon"></i>
+            </div>
+        </div>
         <div class="row">
             <div class="col-md-9">
                 <div id="map"></div>
@@ -59,12 +87,13 @@ while ($row = $result->fetch_assoc()) {
     <?php include '../includes/footer.php'; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script async src="https://maps.googleapis.com/maps/api/js?key=<?php echo GOOGLE_MAPS_API_KEY; ?>&callback=initMap" async defer></script>
+    <script async src="https://maps.googleapis.com/maps/api/js?key=<?php echo GOOGLE_MAPS_API_KEY; ?>&libraries=places&callback=initMap"></script>
     <script>
         let map;
         let markers = [];
         let currentInfoWindow = null;
         const spots = <?php echo json_encode($spots); ?>;
+        let searchBox;
 
         function initMap() {
             // Center on Baguio City
@@ -79,6 +108,73 @@ while ($row = $result->fetch_assoc()) {
                         stylers: [{ visibility: "off" }]
                     }
                 ]
+            });
+
+            // Initialize the search box
+            const input = document.getElementById("pac-input");
+            searchBox = new google.maps.places.SearchBox(input);
+            
+            // Bias the SearchBox results towards current map's viewport
+            map.addListener("bounds_changed", () => {
+                searchBox.setBounds(map.getBounds());
+            });
+
+            // Listen for the event when a user selects a prediction
+            searchBox.addListener("places_changed", () => {
+                const places = searchBox.getPlaces();
+
+                if (places.length == 0) {
+                    return;
+                }
+
+                // For each place, get the icon, name and location.
+                const bounds = new google.maps.LatLngBounds();
+                places.forEach((place) => {
+                    if (!place.geometry || !place.geometry.location) {
+                        console.log("Returned place contains no geometry");
+                        return;
+                    }
+
+                    // Create marker for the searched place
+                    const marker = new google.maps.Marker({
+                        map,
+                        title: place.name,
+                        position: place.geometry.location,
+                        icon: {
+                            url: place.icon,
+                            size: new google.maps.Size(71, 71),
+                            origin: new google.maps.Point(0, 0),
+                            anchor: new google.maps.Point(17, 34),
+                            scaledSize: new google.maps.Size(25, 25),
+                        },
+                    });
+
+                    const infowindow = new google.maps.InfoWindow({
+                        content: `
+                            <div class="info-window">
+                                <h5>${place.name}</h5>
+                                <p>${place.formatted_address}</p>
+                                ${place.rating ? `<p><strong>Rating:</strong> ${place.rating} ⭐</p>` : ''}
+                                ${place.website ? `<a href="${place.website}" target="_blank" class="btn btn-sm btn-primary">Visit Website</a>` : ''}
+                            </div>
+                        `
+                    });
+
+                    marker.addListener("click", () => {
+                        if (currentInfoWindow) {
+                            currentInfoWindow.close();
+                        }
+                        infowindow.open(map, marker);
+                        currentInfoWindow = infowindow;
+                    });
+
+                    if (place.geometry.viewport) {
+                        bounds.union(place.geometry.viewport);
+                    } else {
+                        bounds.extend(place.geometry.location);
+                    }
+                });
+                map.fitBounds(bounds);
             });
 
             // Add markers for each tourist spot

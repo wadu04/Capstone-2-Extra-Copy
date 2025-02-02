@@ -160,7 +160,7 @@ require_once '../includes/config.php';
                           
                         </div>
                         <a href="quiz_game.php" class="btn btn-primary play-btn mt-2">
-                            <i class="fas fa-brain me-1"></i>Play Now
+                            <i class="fas fa-play me-1"></i>Play Now
                         </a>
                     </div>
                 </div>
@@ -191,7 +191,7 @@ require_once '../includes/config.php';
                     <img src="../assets/images/games/puzzle.jpg" class="card-img-top" alt="Word Puzzle Game">
                     <div class="card-body">
                         <h5 class="game-title">Word Puzzle</h5>
-                        <p class="game-description">Find hidden words about Baguio's culture</p>
+                        <p class="game-description">Find hidden words about Baguio</p>
                         <div class="game-stats">
                             
                             <div class="stat-item">
@@ -200,6 +200,26 @@ require_once '../includes/config.php';
                             </div>
                         </div>
                         <a href="word-puzzle.php" class="btn btn-primary play-btn mt-2">
+                            <i class="fas fa-play me-1"></i>Play Now
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="card game-card">
+                    <img src="../assets/images/games/guess.jpg" class="card-img-top" alt="Baguio Quiz Game">
+                    <div class="card-body">
+                        <h5 class="game-title">Image Guessing Game</h5>
+                        <p class="game-description">Test your knowledge of Baguio City by guessing landmarks, food, and culture.</p>
+                        <div class="game-stats">
+                            <div class="stat-item">
+                                <div class="stat-value"></div>
+                                <div class="stat-value"><i class="fas fa-image"></i></div>
+                                <div>Guessing</div>
+                            </div>
+                          
+                        </div>
+                        <a href="guessing-game.php" class="btn btn-primary play-btn mt-2">
                             <i class="fas fa-play me-1"></i>Play Now
                         </a>
                     </div>

@@ -17,7 +17,7 @@ if ($conn->connect_error) {
 }
 
 // Google Maps API Key
-define('GOOGLE_MAPS_API_KEY', 'AIzaSyCiZlSTrJxoYQtMIML4B7XZJbGVKBBEnCg');
+define('GOOGLE_MAPS_API_KEY', 'AIzaSyBxD3fX2OwRUSXn8P6KDFKjydQa6_9k4ss');
 
 // Base URL
 $base_url = "http://localhost/neww/baguixplore";

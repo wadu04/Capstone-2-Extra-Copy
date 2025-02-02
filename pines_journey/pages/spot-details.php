@@ -149,7 +149,7 @@ if (!$spot) {
                     <div class="carousel-inner rounded-start">
                         <?php foreach($images as $index => $image): ?>
                         <div class="carousel-item <?php echo $index === 0 ? 'active' : ''; ?>">
-                            <img src="<?php echo $image; ?>" class="d-block" alt="Tourist spot image <?php echo $index + 1; ?>">
+                            <img src="<?php echo $image; ?>" class="d-block spot-image" alt="Tourist spot image <?php echo $index + 1; ?>" style="cursor: pointer;" onclick="showImageModal(this.src)">
                         </div>
                         <?php endforeach; ?>
                     </div>
@@ -166,7 +166,7 @@ if (!$spot) {
                 </div>
                 <?php else: ?>
                     <?php if ($spot['image_url']): ?>
-                    <img src="<?php echo $spot['image_url']; ?>" class="img-fluid rounded shadow-sm" alt="<?php echo $spot['name']; ?>" style="width: 100%; height: 400px; object-fit: cover;">
+                    <img src="<?php echo $spot['image_url']; ?>" class="img-fluid rounded shadow-sm spot-image" alt="<?php echo $spot['name']; ?>" style="width: 100%; height: 400px; object-fit: cover; cursor: pointer;" onclick="showImageModal(this.src)">
                     <?php endif; ?>
                 <?php endif; ?>
             </div>
@@ -414,7 +414,8 @@ if (!$spot) {
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content bg-transparent border-0">
                 <div class="modal-body text-center p-0">
-                    <img id="modalImage" src="" alt="Full size review image" class="img-fluid" style="max-height: 90vh;">
+                    <img id="modalImage" src="" alt="Full size image" style="max-width: 100%; max-height: 90vh;">
+                    <button type="button" class="btn-close position-absolute top-0 end-0 m-2 bg-light" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
             </div>
         </div>
@@ -509,6 +510,14 @@ if (!$spot) {
                 alert('Error submitting report');
             });
         });
+
+        // Function to show image in modal
+        window.showImageModal = function(imageSrc) {
+            const modalImage = document.getElementById('modalImage');
+            modalImage.src = imageSrc;
+            const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
+            imageModal.show();
+        }
     </script>
 </body>
 </html>
