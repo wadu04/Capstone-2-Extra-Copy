@@ -95,7 +95,7 @@
             words: [
                 { word: 'BURNHAM', clue: 'Famous park in the heart of Baguio' },
                 { word: 'MANSION', clue: 'Official summer residence of the Philippine President' },
-                { word: 'MINES', clue: 'Popular viewpoint with silver works' },
+                { word: 'MINESVIEW', clue: 'Popular viewpoint with silver works' },
                 { word: 'PANAGBENGA', clue: 'Annual flower festival' },
                 { word: 'CATHEDRAL', clue: 'Pink church in Session Road' },
                 { word: 'WRIGHT', clue: 'Park known for horseback riding' },
