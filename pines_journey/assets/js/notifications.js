@@ -61,7 +61,12 @@ $(document).ready(function() {
                                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                         </div>
                                         <div class="modal-body text-center">
-                                            <img src="${notificationItem.find('img').attr('src')}" class="img-fluid mb-3" style="max-height: 300px;">
+                                            <img src="${notificationItem.find('img').attr('src')}" class="img-fluid mb-3 notification-full-image" style="max-height: 300px; cursor: pointer;">
+                                            <div class="mb-3">
+                                                <a href="${notificationItem.find('img').attr('src')}" class="btn btn-primary" download>
+                                                    <i class="fas fa-download"></i> Download Image
+                                                </a>
+                                            </div>
                                             <p>${notificationItem.find('p').text()}</p>
                                         </div>
                                     </div>
@@ -74,7 +79,34 @@ $(document).ready(function() {
                         
                         // Add and show new modal
                         $('body').append(modalHtml);
-                        $('#notificationModal').modal('show');
+                        const modal = $('#notificationModal');
+                        modal.modal('show');
+
+                        // Add click handler for the image
+                        modal.find('.notification-full-image').on('click', function() {
+                            const imageSrc = $(this).attr('src');
+                            // Remove any existing full image modal
+                            $('#fullImageModal').remove();
+                            
+                            // Create and append the full image modal
+                            const fullImageModal = `
+                                <div class="modal fade" id="fullImageModal" tabindex="-1">
+                                    <div class="modal-dialog modal-xl">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body text-center p-0">
+                                                <img src="${imageSrc}" class="img-fluid" style="max-height: 90vh;">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            
+                            $('body').append(fullImageModal);
+                            $('#fullImageModal').modal('show');
+                        });
                     });
                 } else {
                     $('#notificationContainer').html(`
