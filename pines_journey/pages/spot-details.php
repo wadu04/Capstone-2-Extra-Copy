@@ -219,7 +219,7 @@ if (!$spot) {
                             aria-label="Close">
                     </button>
                 </div>
-                <form id="reviewForm" action="../includes/submit_review.php" method="POST" enctype="multipart/form-data">
+                <form id="reviewForm" action="../includes/submit_review.php" method="POST" enctype="multipart/form-data" onsubmit="return validateReviewForm()">
                     <div class="modal-body">
                         <input type="hidden" name="spot_id" value="<?php echo $spot_id; ?>">
                         <div class="mb-3 text-center">
@@ -445,6 +445,8 @@ if (!$spot) {
 
                 star.addEventListener('click', function() {
                     ratingInput.value = this.dataset.rating;
+                    // Remove any previous warning
+                    document.querySelector('.rating-warning')?.remove();
                 });
             });
 
@@ -461,7 +463,23 @@ if (!$spot) {
                 });
             });
         });
-        
+
+        function validateReviewForm() {
+            const ratingInput = document.getElementById('selectedRating');
+            if (!ratingInput.value) {
+                // Remove any existing warning
+                document.querySelector('.rating-warning')?.remove();
+                
+                // Add warning message
+                const warningDiv = document.createElement('div');
+                warningDiv.className = 'rating-warning text-danger mt-2';
+                warningDiv.textContent = 'Please select a star rating before submitting your review.';
+                document.querySelector('.star-rating').parentNode.appendChild(warningDiv);
+                return false;
+            }
+            return true;
+        }
+
         // Initialize carousel with custom interval
         document.addEventListener('DOMContentLoaded', function() {
             var myCarousel = document.querySelector('#spotCarousel');
@@ -498,16 +516,12 @@ if (!$spot) {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('Report submitted successfully');
                     bootstrap.Modal.getInstance(document.getElementById('reportReviewModal')).hide();
                     this.reset();
-                } else {
-                    alert(data.message || 'Error submitting report');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Error submitting report');
             });
         });
 

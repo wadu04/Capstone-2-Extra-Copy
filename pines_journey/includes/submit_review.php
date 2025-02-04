@@ -10,6 +10,14 @@ if (!isset($_SESSION['user_id'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user_id = $_SESSION['user_id'];
     $spot_id = $_POST['spot_id'];
+    
+    // Validate rating
+    if (!isset($_POST['rating']) || empty($_POST['rating'])) {
+        $_SESSION['error'] = "Please select a star rating for your review.";
+        header('Location: ../pages/spot-details.php?id=' . $spot_id);
+        exit();
+    }
+    
     $rating = $_POST['rating'];
     $comment = !empty($_POST['comment']) ? trim($_POST['comment']) : '';
     $image_url = null;
