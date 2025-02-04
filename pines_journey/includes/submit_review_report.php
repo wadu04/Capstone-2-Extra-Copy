@@ -79,9 +79,9 @@ try {
     // Commit transaction
     $conn->commit();
 
-    sendJsonResponse(true, 'Report submitted successfully');
+    sendJsonResponse(true, '');
 } catch (Exception $e) {
     // Rollback transaction on error
     $conn->rollback();
-    sendJsonResponse(false, 'Error submitting report: ' . $e->getMessage());
+    sendJsonResponse(false, '');
 }
