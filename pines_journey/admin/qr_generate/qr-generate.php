@@ -165,7 +165,7 @@ ob_start();
             </div>
         </div>
 
-        <h3>Generated QR Codes</h3>
+        
         <div class="qr-container">
             <?php foreach ($qr_codes as $qr): ?>
                 <div class="qr-item">
