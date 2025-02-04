@@ -2,7 +2,7 @@
 require_once '../includes/auth.php';
 require_once '../../includes/config.php';
 
-// Start output buffering
+$page_title = "Report Management";
 ob_start();
 
 // Mark notifications as read when admin views the page
@@ -24,7 +24,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
             $conn->begin_transaction();
 
             if ($content_type === 'post') {
-                // Delete the blog post
+                // Delete dependent favorites first
+                $stmt = $conn->prepare("DELETE FROM favorites WHERE blog_id = ?");
+                $stmt->bind_param("i", $content_id);
+                $stmt->execute();
+
+                // Delete dependent comments related to the blog post
+                $stmt = $conn->prepare("DELETE FROM comments WHERE blog_id = ?");
+                $stmt->bind_param("i", $content_id);
+                $stmt->execute();
+
+                // Then delete the blog post
                 $stmt = $conn->prepare("DELETE FROM blogs WHERE blog_id = ?");
                 $stmt->bind_param("i", $content_id);
                 $stmt->execute();
@@ -69,7 +79,6 @@ $count_query = "SELECT COUNT(*) as count FROM reports WHERE content_type " .
     ($current_tab === 'blog' ? "IN ('post', 'comment')" : "= 'review'");
 $total_reports = $conn->query($count_query)->fetch_assoc()['count'];
 $total_pages = ceil($total_reports / $items_per_page);
-
 // Get reports based on content type
 $sql = "SELECT r.*, u.username as reporter_name, 
         CASE 
@@ -161,7 +170,7 @@ $reports = $result->fetch_all(MYSQLI_ASSOC);
         </div>
     <?php endif; ?>
 
-    <h1 class="mt-4">Reports Management</h1>
+    
     
     <!-- Tab Navigation -->
     <ul class="nav nav-tabs mb-4">
@@ -176,7 +185,6 @@ $reports = $result->fetch_all(MYSQLI_ASSOC);
             </a>
         </li>
     </ul>
-
     <div class="card mb-4">
         <div class="card-header">
             <i class="fas fa-table me-1"></i>
@@ -231,7 +239,6 @@ $reports = $result->fetch_all(MYSQLI_ASSOC);
                     <?php endforeach; ?>
                 </tbody>
             </table>
-
             <!-- Pagination -->
             <nav aria-label="Page navigation" class="mt-4">
                 <ul class="pagination justify-content-center">
