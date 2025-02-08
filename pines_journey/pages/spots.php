@@ -67,7 +67,9 @@ $result = $conn->query($sql);
             <div class="col-md-4">
                 <div class="card h-100 shadow-sm">
                     <?php if ($spot['image_url']): ?>
-                    <img src="<?php echo $spot['image_url']; ?>" class="card-img-top" alt="<?php echo $spot['name']; ?>" style="height: 200px; object-fit: cover;">
+                    <a href="spot-details.php?id=<?php echo $spot['spot_id']; ?>">
+                        <img src="<?php echo $spot['image_url']; ?>" class="card-img-top" alt="<?php echo $spot['name']; ?>" style="height: 200px; object-fit: cover;">
+                    </a>
                     <?php endif; ?>
                     <div class="card-body">
                         <h5 class="card-title"><?php echo $spot['name']; ?></h5>
