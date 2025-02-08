@@ -72,7 +72,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <input type="text" class="form-control" id="username" name="username" required>
                 </div>
                 <div class="mb-3">
-                    <label for="password" class="form-label">Password</label>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <label for="password" class="form-label">Password</label>
+                        <a href="forgot-pass.php" class="text-decoration-none small">Forgot Password?</a>
+                    </div>
                     <input type="password" class="form-control" id="password" name="password" required>
                 </div>
                 <button type="submit" class="btn btn-primary w-100">Login</button>
