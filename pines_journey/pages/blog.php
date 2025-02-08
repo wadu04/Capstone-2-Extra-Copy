@@ -10,6 +10,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isLoggedIn()) {
                 $content = sanitize($_POST['content']);
                 $user_id = $_SESSION['user_id'];
                 
+                // Check if image was uploaded
+                if (!isset($_FILES['image']) || $_FILES['image']['error'] != 0) {
+                    echo "<script>alert('Please upload an image for your blog post.'); window.history.back();</script>";
+                    exit;
+                }
+
                 // Handle file upload
                 $image_url = '';
                 if(isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
@@ -370,7 +376,7 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
                         </div>
                         <div class="mb-3">
                             <label for="image" class="form-label">Image</label>
-                            <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                            <input type="file" class="form-control" id="image" name="image" accept="image/*" required>
                         </div>
                         <button type="submit" class="btn btn-primary">Create Post</button>
                     </form>
@@ -495,6 +501,19 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
             })
             .catch(error => console.error('Error:', error));
         }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const createPostForm = document.querySelector('#createPostModal form');
+            createPostForm.addEventListener('submit', function(e) {
+                const imageInput = this.querySelector('#image');
+                if (!imageInput.files || imageInput.files.length === 0) {
+                    e.preventDefault();
+                    alert('Please select an image for your blog post.');
+                    return false;
+                }
+            });
+        });
     </script>
 </body>
 </html>
