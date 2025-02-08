@@ -94,12 +94,12 @@ if (!$spot) {
     <?php include '../includes/header.php'; ?>
 
     <div class="container py-4">
-        <nav aria-label="breadcrumb" class="mb-4">
+        <!-- <nav aria-label="breadcrumb" class="mb-4">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="spots.php">Tourist Spots</a></li>
                 <li class="breadcrumb-item active" aria-current="page"><?php echo $spot['name']; ?></li>
             </ol>
-        </nav>
+        </nav> -->
 
         <div class="mb-4">
             <h2 class="display-5 mb-2"><?php echo $spot['name']; ?></h2>
