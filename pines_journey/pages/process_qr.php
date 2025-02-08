@@ -60,7 +60,7 @@ try {
     $conn->commit();
     echo json_encode([
         'success' => true, 
-        'message' => 'Congratulations! You earned ' . $qr_code['points'] . ' points!'
+        'message' => 'Congratulations You earned Badge!'
     ]);
 } catch (Exception $e) {
     $conn->rollback();
