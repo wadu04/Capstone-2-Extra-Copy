@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <span class="text-primary">Pines'</span><span class="text-success">Journey</span>
                 </a>
             </h2>
-            <h4 class="text-center mb-4">Reset Password</h4>
+            
             <?php if ($error): ?>
                 <div class="alert alert-danger"><?php echo $error; ?></div>
             <?php endif; ?>
