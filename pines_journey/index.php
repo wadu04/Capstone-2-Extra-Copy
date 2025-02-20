@@ -16,7 +16,7 @@ require_once 'includes/config.php';
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm fixed-top">
         <div class="container">
             <a class="navbar-brand" href="index.php">
                 <span class="text-primary">Pines'</span><span class="text-success">Journey</span>
@@ -57,6 +57,9 @@ require_once 'includes/config.php';
                                     <li><a class="dropdown-item" href="admin/dashboard.php">Admin Dashboard</a></li>
                                 <?php endif; ?>
                                 <li><a class="dropdown-item" href="pages/profile.php">Profile</a></li>
+                                <li><a class="dropdown-item" href="../pages/myblogs.php">My Blogs</a></li>
+                            <li><a class="dropdown-item" href="../pages/myfavourites.php">Favourites</a></li>
+                            <li><a class="dropdown-item" href="../pages/myqr-scans.php">Qr Scans</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="includes/logout.php">Logout</a></li>
                             </ul>
@@ -129,14 +132,73 @@ require_once 'includes/config.php';
         transform: translateY(-2px);
         box-shadow: 0 5px 15px rgba(0,0,0,0.2);
     }
+    body {
+        padding-top: 76px; /* Add padding to prevent content from hiding behind fixed navbar */
+    }
     </style>
     
     
+    <!-- Cultural Database Section -->
+    <!-- <div class="container py-5">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <img src="assets/css/images/culture.jpg" class="img-fluid rounded shadow" alt="Cultural Database" style="object-fit: cover; height: 400px; width: 100%;">
+            </div>
+            <div class="col-md-6">
+                <div class="ps-md-4">
+                    <h2 class="mb-4">Cultural Database</h2>
+                    <p class="lead mb-4">Explore the rich cultural heritage of Baguio City through our comprehensive cultural database. Discover traditional practices, indigenous art, local customs, and the vibrant history that makes Baguio a unique cultural destination in the Philippines.</p>
+                    <a href="pages/cultural-database.php" class="btn btn-lg px-4" style="background-color: white; color: black; border: 2px solid black;">
+                        <i class="fas fa-book-open me-2"></i>Visit Database
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div> -->
 
-   <?php
+
+       <!-- Popular Tourist Spots Section -->
+       <?php
+    $spots_sql = "SELECT s.*, COUNT(r.review_id) as review_count, AVG(r.rating) as avg_rating 
+            FROM tourist_spots s 
+            LEFT JOIN reviews r ON s.spot_id = r.spot_id 
+            GROUP BY s.spot_id 
+            ORDER BY review_count DESC, avg_rating DESC 
+            LIMIT 3";
+    $spots_result = $conn->query($spots_sql);
+    ?>
+    <div class="container py-5">
+        <h2 class="mb-4">Popular Tourist Spots</h2>
+        <div class="row g-4">
+            <?php while ($spot = $spots_result->fetch_assoc()): ?>
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <?php if ($spot['image_url']): ?>
+                    <img src="tourist Spots/<?php echo $spot['image_url']; ?>" class="card-img-top" style="height: 200px; object-fit: cover;" alt="<?php echo htmlspecialchars($spot['name']); ?>">
+                    <?php endif; ?>
+                    <div class="card-body">
+                        <h5 class="card-title"><?php echo htmlspecialchars($spot['name']); ?></h5>
+                        <p class="card-text text-muted"><?php echo substr(htmlspecialchars($spot['description']), 0, 100); ?>...</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-star text-warning"></i>
+                                <span><?php echo number_format($spot['avg_rating'], 1); ?></span>
+                                <small class="text-muted">(<?php echo $spot['review_count']; ?> reviews)</small>
+                            </div>
+                            <a href="pages/spot-details.php?id=<?php echo $spot['spot_id']; ?>" class="btn btn-outline-primary btn-sm">View</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php endwhile; ?>
+        </div>
+    </div>
+
+    <!-- Upcoming Events Section -->
+    <?php
     // Get upcoming events (limit to 3)
-    $sql = "SELECT * FROM events WHERE start_datetime >= NOW() ORDER BY start_datetime ASC LIMIT 3";
-    $result = $conn->query($sql);
+    $events_sql = "SELECT * FROM events WHERE start_datetime >= NOW() ORDER BY start_datetime ASC LIMIT 3";
+    $result = $conn->query($events_sql);
     ?>
     <div class="container py-5">
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -194,12 +256,56 @@ require_once 'includes/config.php';
    
     
 
+    <!-- Popular Blog Posts Section -->
+    <?php
+    $blogs_sql = "SELECT b.*, u.username, u.profile_picture,
+            (SELECT COUNT(*) FROM favorites WHERE blog_id = b.blog_id) as favorite_count,
+            " . (isLoggedIn() ? "(SELECT COUNT(*) FROM favorites WHERE blog_id = b.blog_id AND user_id = " . $_SESSION['user_id'] . ") as is_favorited" : "0 as is_favorited") . ",
+            (SELECT COUNT(*) FROM comments WHERE blog_id = b.blog_id) as comment_count
+            FROM blogs b 
+            JOIN users u ON b.user_id = u.user_id
+            GROUP BY b.blog_id 
+            ORDER BY favorite_count DESC, comment_count DESC 
+            LIMIT 4";
+    $blogs_result = $conn->query($blogs_sql);
+    ?>
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="mb-0">Popular Blog Posts</h2>
+            <a href="pages/blog.php" class="btn btn-primary">View All Posts</a>
+        </div>
+        <div class="row g-4">
+            <?php while ($blog = $blogs_result->fetch_assoc()): ?>
+            <div class="col-md-6">
+                <div class="card h-100 shadow-sm">
+                    <?php if ($blog['image_url']): ?>
+                    <img src="Blogs/<?php echo $blog['image_url']; ?>" class="card-img-top" style="height: 300px; object-fit: cover;" alt="<?php echo htmlspecialchars($blog['title']); ?>">
+                    <?php endif; ?>
+                    <div class="card-body">
+                        <h5 class="card-title fs-4"><?php echo htmlspecialchars($blog['title']); ?></h5>
+                        <p class="text-primary mb-3">
+                            <i class="fas fa-user"></i> <?php echo htmlspecialchars($blog['username']); ?>
+                        </p>
+                        <p class="card-text text-muted"><?php echo substr(htmlspecialchars($blog['content']), 0, 200); ?>...</p>
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <div>
+                                <span class="me-3"><i class="far fa-heart"></i> <?php echo $blog['favorite_count']; ?> likes</span>
+                                <span><i class="far fa-comment"></i> <?php echo $blog['comment_count']; ?> comments</span>
+                            </div>
+                            <a href="pages/blog-post.php?id=<?php echo $blog['blog_id']; ?>" class="btn btn-outline-primary">Read More</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php endwhile; ?>
+        </div>
+    </div>
     <!-- Footer -->
     <footer class="bg-light py-4 mt-5">
         <div class="container">
             <div class="row">
                 <div class="col-md-6">
-                    <h5><span class="text-primary">Bagui</span><span class="text-success">Xplore</span></h5>
+                    <h5><span class="text-primary">Pines'</span><span class="text-success">Journey</span></h5>
                     <p>Your ultimate guide to exploring Baguio City's culture and attractions.</p>
                 </div>
                 <div class="col-md-6 text-md-end">
