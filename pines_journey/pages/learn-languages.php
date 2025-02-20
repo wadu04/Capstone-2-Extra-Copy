@@ -245,6 +245,47 @@ require_once '../includes/config.php';
         font-size: 16px;
       }
     }
+
+    /* Modal styling */
+    .modal-dialog {
+      display: flex;
+      align-items: center;
+      min-height: calc(100% - 1rem);
+    }
+    .modal-content {
+      background: #fff;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      border: none;
+    }
+    .modal-header {
+      background: linear-gradient(145deg, #4CAF50, #45a049);
+      color: white;
+      border-radius: 15px 15px 0 0;
+      padding: 1.5rem;
+      border-bottom: none;
+    }
+    .modal-title {
+      font-weight: 600;
+      font-size: 1.5rem;
+    }
+    .modal-body {
+      padding: 2rem;
+    }
+    .pronunciation-text {
+      font-size: 1.25rem;
+      color: #2C3E50;
+      margin-bottom: 1rem;
+      font-weight: 500;
+    }
+    .modal-footer {
+      border-top: none;
+      padding: 1.5rem;
+    }
+    .btn-close {
+      color: white;
+      opacity: 1;
+    }
   </style>
 </head>
 <body>
@@ -280,18 +321,19 @@ require_once '../includes/config.php';
 
   <!-- Pronunciation Modal (Bootstrap) -->
   <div class="modal fade" id="pronunciationModal" tabindex="-1" aria-labelledby="pronunciationModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 id="pronunciationModalLabel" class="modal-title">Word Details</h5>
+          <h5 class="modal-title" id="pronunciationModalLabel">Pronunciation Guide</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <p id="pronunciationInfo"><strong>Pronunciation:</strong> <span></span></p>
-          <p id="originInfo"><strong>Origin:</strong> <span></span></p>
+          <div id="pronunciationInfo">
+            <p class="pronunciation-text">Pronunciation: <span></span></p>
+          </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Got it!</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         </div>
       </div>
     </div>
@@ -464,14 +506,12 @@ require_once '../includes/config.php';
 
     function showPronunciationModal(word) {
       // Look up word details; if not found, use default message.
-      const details = (wordDetails[currentLanguage] && wordDetails[currentLanguage][word]) || { pronunciation: "N/A", origin: "Information not available" };
+      const details = (wordDetails[currentLanguage] && wordDetails[currentLanguage][word]) || { pronunciation: "N/A" };
 
       document.querySelector('#pronunciationInfo span').textContent = details.pronunciation;
-      document.querySelector('#originInfo span').textContent = details.origin;
-
-      // Use Bootstrap modal to show the popup.
-      const modalEl = document.getElementById('pronunciationModal');
-      const modal = new bootstrap.Modal(modalEl);
+      
+      // Show the modal
+      const modal = new bootstrap.Modal(document.getElementById('pronunciationModal'));
       modal.show();
     }
 
