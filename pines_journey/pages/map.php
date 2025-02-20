@@ -113,7 +113,25 @@ while ($row = $result->fetch_assoc()) {
             // Initialize the search box
             const input = document.getElementById("pac-input");
             searchBox = new google.maps.places.SearchBox(input);
-            
+
+            // Add click event for search icon
+            document.querySelector('.search-icon').addEventListener('click', function() {
+                const searchEvent = new Event('input');
+                input.dispatchEvent(searchEvent);
+            });
+
+            // Check for search parameter in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const searchQuery = urlParams.get('search');
+            if (searchQuery) {
+                input.value = searchQuery;
+                // Trigger search after a short delay to ensure map is fully loaded
+                setTimeout(() => {
+                    const searchEvent = new Event('input');
+                    input.dispatchEvent(searchEvent);
+                }, 500);
+            }
+
             // Bias the SearchBox results towards current map's viewport
             map.addListener("bounds_changed", () => {
                 searchBox.setBounds(map.getBounds());
