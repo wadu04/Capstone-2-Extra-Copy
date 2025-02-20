@@ -48,7 +48,12 @@
         .card-front {
             background-color: #2c3e50;
             color: white;
-            font-size: 24px;
+        }
+        .card-front img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 10px;
         }
         .card-back {
             background-color: white;
@@ -70,6 +75,51 @@
         .btn-try-again {
             display: none;
         }
+        #winModal .modal-content {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 20px;
+            text-align: center;
+            padding: 30px;
+            border: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        #winModal img.celebration-gif {
+            max-width: 200px;
+            margin: 0 auto 25px;
+            border-radius: 10px;
+        }
+        #winModal h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-weight: 700;
+            font-size: 2rem;
+        }
+        #winModal p {
+            font-size: 1.2rem;
+            color: #495057;
+            margin-bottom: 10px;
+        }
+        #winModal .modal-footer {
+            border: none;
+            justify-content: center;
+            padding-top: 20px;
+        }
+        #winModal .btn-primary {
+            background-color: #3498db;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+        }
+        #winModal .btn-primary:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+        .modal-backdrop.show {
+            opacity: 0.7;
+        }
     </style>
 </head>
 <body>
@@ -84,8 +134,22 @@
                 <div id="moves">Moves: 0</div>
             </div>
             <div class="memory-grid" id="gameBoard"></div>
-            <div class="game-controls">
-                <button class="btn btn-primary btn-try-again" id="tryAgainBtn" onclick="resetGame()">Try Again</button>
+        </div>
+    </div>
+    <div class="modal fade" id="winModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <img src="../assets/images/celebration.gif" class="celebration-gif" alt="Celebration">
+                    <h3>Congratulations! You Won!</h3>
+                    <p>Moves: <span id="winMoves">0</span></p>
+                    <p>Time: <span id="winTime">0</span> seconds</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="resetGame()" data-bs-dismiss="modal">
+                        Try Again
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -125,11 +189,11 @@
             const gameBoard = document.getElementById('gameBoard');
             gameBoard.innerHTML = '';
             
-            // Hide try again button
-            document.querySelector('.btn-try-again').style.display = 'none';
-            
             // Reinitialize game
             createBoard();
+            
+            // Start the timer
+            startTimer();
         }
 
         function shuffle(array) {
@@ -149,7 +213,7 @@
                 cardElement.className = 'card';
                 cardElement.innerHTML = `
                     <div class="card-inner">
-                        <div class="card-front">?</div>
+                        <div class="card-front"><img src="../assets/images/games/front.jpg" alt="Card Front"></div>
                         <div class="card-back">
                             <img src="${card}" alt="Baguio Landmark">
                         </div>
@@ -159,8 +223,6 @@
                 cardElement.addEventListener('click', flipCard);
                 gameBoard.appendChild(cardElement);
             });
-
-            startTimer();
         }
 
         function flipCard() {
@@ -186,9 +248,13 @@
                 flippedCards = [];
                 if (matchedPairs === cards.length / 2) {
                     setTimeout(() => {
-                        alert(`Congratulations! You won in ${moves} moves and ${timer} seconds!`);
                         clearInterval(timerInterval);
-                        document.querySelector('.btn-try-again').style.display = 'inline-block';
+                        // Update win statistics
+                        document.getElementById('winMoves').textContent = moves;
+                        document.getElementById('winTime').textContent = timer;
+                        // Show modal
+                        const winModal = new bootstrap.Modal(document.getElementById('winModal'));
+                        winModal.show();
                     }, 500);
                 }
             } else {
@@ -209,6 +275,7 @@
 
         // Initialize the game
         createBoard();
+        startTimer();
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
