@@ -48,6 +48,19 @@ $result = $conn->query($sql);
             font-size: 1.2rem;
             color: #555;
         }
+        .status-open {
+            background-color: lightblue;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .status-closed {
+            background-color: #ff6b6b;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
     </style>
 </head>
 <body>
@@ -76,6 +89,11 @@ $result = $conn->query($sql);
                         <p class="card-text text-muted">
                             <i class="fas fa-map-marker-alt"></i> <?php echo $spot['location']; ?>
                         </p>
+                        <div class="mb-2">
+                            <span class="status-<?php echo $spot['status']; ?>">
+                                <?php echo ucfirst($spot['status']); ?>
+                            </span>
+                        </div>
                         <div class="mb-3">
                             <small class="text-muted">
                                 <i class="far fa-clock"></i> <?php echo $spot['opening_hours']; ?><br>
@@ -102,9 +120,10 @@ $result = $conn->query($sql);
                                 </span>
                             </div>
                         </div>
-                        <a href="spot-details.php?id=<?php echo $spot['spot_id']; ?>" class="btn btn-primary">
-                            View Details
-                        </a>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="spot-details.php?id=<?php echo $spot['spot_id']; ?>" class="btn btn-primary">View Details</a>
+                           
+                        </div>
                     </div>
                 </div>
             </div>

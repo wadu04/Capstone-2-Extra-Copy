@@ -28,15 +28,31 @@ $result = $stmt->get_result();
 $spot = $result->fetch_assoc();
 
 // Get all reviews for this spot
-$sql = "SELECT r.*, u.username, u.profile_picture, r.image_url 
+$sql = "SELECT r.*, u.username, u.profile_picture, r.image_url,
+        (SELECT COUNT(*) FROM review_helpful WHERE review_id = r.review_id) as helpful_count,
+        " . (isset($_SESSION['user_id']) ? "(SELECT COUNT(*) FROM review_helpful WHERE review_id = r.review_id AND user_id = " . $_SESSION['user_id'] . ") as is_helpful" : "0 as is_helpful") . "
         FROM reviews r 
         JOIN users u ON r.user_id = u.user_id 
         WHERE r.spot_id = ? 
-        ORDER BY r.created_at DESC";
+        ORDER BY helpful_count DESC, r.created_at DESC";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $spot_id);
 $stmt->execute();
 $reviews = $stmt->get_result();
+
+// Get the most helpful review
+$sql = "SELECT r.*, u.username, u.profile_picture, r.image_url,
+        (SELECT COUNT(*) FROM review_helpful WHERE review_id = r.review_id) as helpful_count
+        FROM reviews r 
+        JOIN users u ON r.user_id = u.user_id 
+        WHERE r.spot_id = ? 
+        AND r.rating >= 4
+        ORDER BY helpful_count DESC, r.created_at DESC
+        LIMIT 1";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $spot_id);
+$stmt->execute();
+$most_helpful_review = $stmt->get_result()->fetch_assoc();
 
 if (!$spot) {
     header('Location: spots.php');
@@ -119,7 +135,7 @@ if (!$spot) {
                 <span class="text-muted ms-2">
                     (<?php echo number_format($spot['avg_rating'], 1); ?>) 
                     <?php echo $spot['review_count']; ?> review<?php echo $spot['review_count'] != 1 ? 's' : ''; ?>
-                    <a href="#" data-bs-toggle="modal" data-bs-target="#allReviewsModal">See all</a>
+                    
                 </span>
             </div>
         </div>
@@ -169,6 +185,53 @@ if (!$spot) {
                     <img src="<?php echo $spot['image_url']; ?>" class="img-fluid rounded shadow-sm spot-image" alt="<?php echo $spot['name']; ?>" style="width: 100%; height: 400px; object-fit: cover; cursor: pointer;" onclick="showImageModal(this.src)">
                     <?php endif; ?>
                 <?php endif; ?>
+
+                <?php if ($most_helpful_review): ?>
+                <div class="mt-3">
+                    <div class="card">
+                        
+                        <div class="card-body">
+                        
+                            <div class="d-flex align-items-center mb-3">
+                                <img src="../<?php echo $most_helpful_review['profile_picture']; ?>" 
+                                    alt="Profile" 
+                                    class="rounded-circle me-2" 
+                                    style="width: 40px; height: 40px;">
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <strong><?php echo htmlspecialchars($most_helpful_review['username']); ?></strong>
+                                        <a href="#" data-bs-toggle="modal" data-bs-target="#allReviewsModal" class="text-decoration-none">See all</a>
+                                    </div>
+                                    <div class="text-warning">
+                                        <?php for($i = 1; $i <= 5; $i++): ?>
+                                            <i class="fas fa-star<?php echo $i <= $most_helpful_review['rating'] ? '' : '-o'; ?>"></i>
+                                        <?php endfor; ?>
+                                        
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <p class="card-text"><?php echo nl2br(htmlspecialchars($most_helpful_review['comment'])); ?></p>
+                            </div>
+
+                            <?php if (!empty($most_helpful_review['image_url'])): ?>
+                            <div class="mb-3">
+                                <img src="<?php echo '../uploads/review_pic/' . $most_helpful_review['image_url']; ?>" 
+                                    class="img-fluid rounded" 
+                                    alt="Review Image"
+                                    style="max-height: 200px; object-fit: cover; width: 100%;">
+                            </div>
+                            <?php endif; ?>
+
+                            <div class="text-muted small">
+                                <i class="fas fa-thumbs-up"></i> <?php echo $most_helpful_review['helpful_count']; ?> people found this helpful
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
+                
             </div>
             <div class="col-md-6">
                 <div class="ps-md-4">
@@ -327,11 +390,7 @@ if (!$spot) {
                                         <h6 class="mb-0"><?php echo htmlspecialchars($review['username']); ?></h6>
                                         <div class="text-warning">
                                             <?php for($i = 1; $i <= 5; $i++): ?>
-                                                <?php if($i <= $review['rating']): ?>
-                                                    <i class="fas fa-star"></i>
-                                                <?php else: ?>
-                                                    <i class="far fa-star"></i>
-                                                <?php endif; ?>
+                                                <i class="fas fa-star<?php echo $i <= $review['rating'] ? '' : '-o'; ?>"></i>
                                             <?php endfor; ?>
                                         </div>
                                         <small class="text-muted"><?php echo date('F j, Y', strtotime($review['created_at'])); ?></small>
@@ -362,6 +421,20 @@ if (!$spot) {
                                          onclick="showFullImage(this.src)">
                                 </div>
                                 <?php endif; ?>
+                                <div class="mt-2">
+                                    <?php if (isLoggedIn()): ?>
+                                    <button class="btn btn-link text-decoration-none helpful-btn <?php echo $review['is_helpful'] ? 'text-primary' : 'text-muted'; ?>"
+                                            onclick="toggleHelpful(<?php echo $review['review_id']; ?>, this)">
+                                        <i class="fas fa-thumbs-up"></i>
+                                        <span class="helpful-count"><?php echo $review['helpful_count']; ?></span> Helpful
+                                    </button>
+                                    <?php else: ?>
+                                    <span class="text-muted">
+                                        <i class="fas fa-thumbs-up"></i>
+                                        <span class="helpful-count"><?php echo $review['helpful_count']; ?></span> Helpful
+                                    </span>
+                                    <?php endif; ?>
+                                </div>
                             </div>
                             <?php endwhile; ?>
                         <?php else: ?>
@@ -531,6 +604,62 @@ if (!$spot) {
             modalImage.src = imageSrc;
             const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
             imageModal.show();
+        }
+
+        function helpfulReview(reviewId) {
+            if (!<?php echo isset($_SESSION['user_id']) ? 'true' : 'false'; ?>) {
+                alert('Please login to mark a review as helpful');
+                return;
+            }
+            fetch('../includes/mark_helpful.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    review_id: reviewId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const helpfulCount = document.querySelector(`.reviews-list .badge[review-id="${reviewId}"]`);
+                    helpfulCount.textContent = parseInt(helpfulCount.textContent) + 1;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+        function toggleHelpful(reviewId, btn) {
+            fetch('../includes/mark_helpful.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    review_id: reviewId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const helpfulCount = btn.querySelector('.helpful-count');
+                    helpfulCount.textContent = data.helpful_count;
+                    
+                    if (data.action === 'added') {
+                        btn.classList.remove('text-muted');
+                        btn.classList.add('text-primary');
+                    } else {
+                        btn.classList.remove('text-primary');
+                        btn.classList.add('text-muted');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
         }
     </script>
 </body>
