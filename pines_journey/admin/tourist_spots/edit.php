@@ -1,4 +1,5 @@
 <?php
+
 require_once '../../includes/config.php';
 
 $spot_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
@@ -26,6 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $tips = sanitize($_POST['tips']);
     $latitude = (float)$_POST['latitude'];
     $longitude = (float)$_POST['longitude'];
+    $status = sanitize($_POST['status']); // Added status variable
 
     // Handle multiple file uploads
     $target_dir = "../../uploads/tourist_spots/";
@@ -66,11 +68,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     if (!$error) {
-        $stmt = $conn->prepare("UPDATE tourist_spots SET name = ?, location = ?, description = ?, opening_hours = ?, entrance_fee = ?, tips = ?, latitude = ?, longitude = ?, image_url = ?, img2 = ?, img3 = ?, img4 = ? WHERE spot_id = ?");
-        $stmt->bind_param("ssssdsddssssi", 
+        // Corrected SQL with proper placeholder count
+        $stmt = $conn->prepare("UPDATE tourist_spots SET name = ?, location = ?, description = ?, opening_hours = ?, entrance_fee = ?, tips = ?, latitude = ?, longitude = ?, image_url = ?, img2 = ?, img3 = ?, img4 = ?, status = ? WHERE spot_id = ?");
+        // Corrected bind_param with 14 parameters
+        $stmt->bind_param("ssssdsddsssssi", 
             $name, $location, $description, $opening_hours, $entrance_fee, $tips,
             $latitude, $longitude, $image_urls['image_url'], $image_urls['img2'],
-            $image_urls['img3'], $image_urls['img4'], $spot_id
+            $image_urls['img3'], $image_urls['img4'], $status, $spot_id // Added $status
         );
         
         if ($stmt->execute()) {
@@ -81,10 +85,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt->execute();
             $spot = $stmt->get_result()->fetch_assoc();
         } else {
-            $error = "Failed to update tourist spot";
+            $error = "Failed to update tourist spot: " . $conn->error;
         }
     }
 }
+
+// The rest of your HTML/PHP code remains unchanged
+
 
 $page_title = "Edit Tourist Spot";
 ob_start();
@@ -157,6 +164,18 @@ ob_start();
                     <div class="mb-3">
                         <label for="longitude" class="form-label">Longitude</label>
                         <input type="number" step="any" class="form-control" id="longitude" name="longitude" value="<?php echo $spot['longitude']; ?>" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status" required>
+                            <option value="open" <?php echo $spot['status'] == 'open' ? 'selected' : ''; ?>>Open</option>
+                            <option value="closed" <?php echo $spot['status'] == 'closed' ? 'selected' : ''; ?>>Closed</option>
+                        </select>
                     </div>
                 </div>
             </div>
