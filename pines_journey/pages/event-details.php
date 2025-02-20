@@ -85,7 +85,15 @@ if (!$event) {
                 <div class="card mb-4">
                     <div class="card-body">
                         <h5 class="text-primary">Location</h5>
-                        <p><i class="fas fa-map-marker-alt"></i> <?php echo $event['location']; ?></p>
+                        <p class="d-flex align-items-center justify-content-between">
+                            <span class="d-flex align-items-center" style="flex: 1;">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span class="location-text" style="cursor: pointer; margin-left: 10px;" onclick="redirectToMap('<?php echo htmlspecialchars($event['location'], ENT_QUOTES); ?>')"><?php echo $event['location']; ?></span>
+                            </span>
+                            <button class="btn btn-sm btn-outline-primary ms-2" onclick="redirectToMap('<?php echo htmlspecialchars($event['location'], ENT_QUOTES); ?>')">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </p>
                     </div>
                 </div>
 
@@ -111,5 +119,10 @@ if (!$event) {
 
     <?php include '../includes/footer.php'; ?>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function redirectToMap(location) {
+            window.location.href = 'map.php?search=' + encodeURIComponent(location);
+        }
+    </script>
 </body>
 </html>
