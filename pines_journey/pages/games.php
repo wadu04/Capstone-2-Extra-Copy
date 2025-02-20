@@ -174,7 +174,7 @@ require_once '../includes/config.php';
                         <p class="game-description">Match pairs of Baguio landmarks!</p>
                         <div class="game-stats">
                             <div class="stat-item">
-                            <div class="stat-value"><i class="fas fa-clock"></i></div>
+                            <div class="stat-value"><i class="fas fa-brain"></i></div>
                                 <div>Matches</div>
                             </div>
                           
@@ -247,14 +247,14 @@ require_once '../includes/config.php';
             </div>
             <div class="col-lg-3 col-md-4 col-sm-6">
                 <div class="card game-card">
-                    <img src="../assets/images/games/guess.jpg" class="card-img-top" alt="Baguio Quiz Game">
+                    <img src="../assets/images/games/arti.png" class="card-img-top" alt="Baguio Quiz Game">
                     <div class="card-body">
-                        <h5 class="game-title">Image Guessing Game</h5>
-                        <p class="game-description">Test your knowledge of Baguio City by guessing landmarks, food, and culture.</p>
+                        <h5 class="game-title">Find Artifacts</h5>
+                        <p class="game-description">Find amazing and unique Artifacts hidden in the image.</p>
                         <div class="game-stats">
                             <div class="stat-item">
                                 <div class="stat-value"></div>
-                                <div class="stat-value"><i class="fas fa-image"></i></div>
+                                <div class="stat-value"><i class="fas fa-binoculars"></i></div>
                                 <div>Guessing</div>
                             </div>
                           
