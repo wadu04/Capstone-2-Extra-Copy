@@ -54,12 +54,12 @@ require_once 'includes/config.php';
                             </a>
                             <ul class="dropdown-menu">
                                 <?php if (isAdmin()): ?>
-                                    <li><a class="dropdown-item" href="admin/dashboard.php">Admin Dashboard</a></li>
+                                    <li><a class="dropdown-item" href="admin/dashboard/index.php">Admin Dashboard</a></li>
                                 <?php endif; ?>
                                 <li><a class="dropdown-item" href="pages/profile.php">Profile</a></li>
-                                <li><a class="dropdown-item" href="../pages/myblogs.php">My Blogs</a></li>
-                            <li><a class="dropdown-item" href="../pages/myfavourites.php">Favourites</a></li>
-                            <li><a class="dropdown-item" href="../pages/myqr-scans.php">Qr Scans</a></li>
+                                <li><a class="dropdown-item" href="pages/myblogs.php">My Blogs</a></li>
+                            <li><a class="dropdown-item" href="pages/myfavourites.php">Favourites</a></li>
+                            <li><a class="dropdown-item" href="pages/myqr-scans.php">Qr Scans</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="includes/logout.php">Logout</a></li>
                             </ul>

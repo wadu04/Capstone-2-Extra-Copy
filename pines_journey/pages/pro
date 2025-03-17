@@ -14,9 +14,6 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
-error_log("Server timezone: " . date_default_timezone_get());
-error_log("Current server time: " . date('Y-m-d H:i:s'));
-
 // Function to generate OTP
 function generateOTP() {
     return sprintf("%06d", mt_rand(0, 999999));
@@ -28,23 +25,23 @@ function sendOTP($email, $otp) {
     
     try {
         // Server settings
-        $mail->SMTPDebug = 0; // Change from 2 to 0 for production
         $mail->isSMTP();
-        $mail->Host = 'smtp-relay.brevo.com';
-        $mail->SMTPAuth = true;
-        $mail->Username = '882945001@smtp-brevo.com';
-        $mail->Password = 'bgmBAzXChEdGJRaZ';
+        $mail->Host       = 'smtp-relay.brevo.com';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = '
+882945001@smtp-brevo.com'; // Replace with your Brevo username
+        $mail->Password   = 'bgmBAzXChEdGJRaZ'; // Your Brevo API key
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port = 587;
+        $mail->Port       = 587;
         
         // Recipients
-        $mail->setFrom('pinesjourneyy@gmail.com', 'Pines Journey');
+        $mail->setFrom('noreply@pinesjourney.com', 'Pines Journey');
         $mail->addAddress($email);
         
         // Content
         $mail->isHTML(true);
         $mail->Subject = 'Your Password Change Verification Code';
-        $mail->Body = '
+        $mail->Body    = '
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
                 <h2 style="color: #333; text-align: center;">Password Change Request</h2>
                 <p style="font-size: 16px; line-height: 1.5;">Hello,</p>
@@ -56,15 +53,10 @@ function sendOTP($email, $otp) {
             </div>
         ';
         
-        error_log("Attempting to send email to: " . $email);
-        error_log("Using SMTP: " . $mail->Host);
-        error_log("Username: " . $mail->Username);
-        
-        $result = $mail->send();
+        $mail->send();
         return true;
     } catch (Exception $e) {
-        error_log("Mail Error: " . $mail->ErrorInfo);
-        throw new Exception("Failed to send email: " . $mail->ErrorInfo);
+        return false;
     }
 }
 
@@ -90,35 +82,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['request_otp'])) {
         $otp = generateOTP();
         $expires_at = date('Y-m-d H:i:s', strtotime('+15 minutes'));
         
-        error_log("Generated new OTP: " . $otp);
-        error_log("Expiration time set to: " . $expires_at);
-        
         // Delete any existing OTPs for this user
         $stmt = $conn->prepare("DELETE FROM password_reset_otp WHERE user_id = ?");
         $stmt->bind_param("i", $user_id);
         $stmt->execute();
         
-        // Try to send OTP first before storing in database
-        if (!sendOTP($email, $otp)) {
+        // Store new OTP in database
+        $stmt = $conn->prepare("INSERT INTO password_reset_otp (user_id, otp_code, expires_at) VALUES (?, ?, ?)");
+        $stmt->bind_param("iss", $user_id, $otp, $expires_at);
+        $stmt->execute();
+        
+        // Send OTP via email
+        if (sendOTP($email, $otp)) {
+            echo json_encode(['success' => true, 'message' => 'Verification code sent to your email']);
+        } else {
             throw new Exception("Failed to send verification code");
         }
         
-        // Store new OTP in database only if email was sent successfully
-        $stmt = $conn->prepare("INSERT INTO password_reset_otp (user_id, otp_code, expires_at) VALUES (?, ?, ?)");
-        $stmt->bind_param("iss", $user_id, $otp, $expires_at);
-        
-        if (!$stmt->execute()) {
-            error_log("Failed to store OTP: " . $stmt->error);
-            throw new Exception("Failed to store OTP");
-        }
-        
-        // Add debug logging
-        error_log("Stored OTP in database - User ID: " . $user_id . ", OTP: " . $otp . ", Expires: " . $expires_at);
-        
-        echo json_encode(['success' => true, 'message' => 'Verification code sent to your email']);
-        
     } catch (Exception $e) {
-        error_log("OTP Error: " . $e->getMessage());
         echo json_encode(['success' => false, 'message' => $e->getMessage()]);
     }
     
@@ -136,37 +117,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['verify_otp'])) {
             throw new Exception("Please enter the verification code");
         }
         
-        // Debug logging
-        error_log("Verifying OTP for user_id: " . $user_id . ", OTP: " . $otp_code);
-        
-        // Get current server time for debugging
-        $current_time = date('Y-m-d H:i:s');
-        error_log("Current server time: " . $current_time);
-        
-        // First, let's check if the OTP exists without expiration check
-        $debug_stmt = $conn->prepare("SELECT otp_code, expires_at FROM password_reset_otp WHERE user_id = ? ORDER BY created_at DESC LIMIT 1");
-        $debug_stmt->bind_param("i", $user_id);
-        $debug_stmt->execute();
-        $debug_result = $debug_stmt->get_result();
-        if ($row = $debug_result->fetch_assoc()) {
-            error_log("Latest OTP in DB - Code: " . $row['otp_code'] . ", Expires: " . $row['expires_at']);
-            error_log("Submitted OTP: " . $otp_code);
-            error_log("Comparison result: " . ($row['otp_code'] === $otp_code ? "Match" : "No Match"));
-        }
-        
-        // Modified query to use explicit timestamp comparison
-        $stmt = $conn->prepare("
-            SELECT * FROM password_reset_otp 
-            WHERE user_id = ? 
-            AND otp_code = ? 
-            AND expires_at > ?
-        ");
-        $stmt->bind_param("iss", $user_id, $otp_code, $current_time);
+        // Check if OTP exists and is valid
+        $stmt = $conn->prepare("SELECT * FROM password_reset_otp WHERE user_id = ? AND otp_code = ? AND expires_at > NOW()");
+        $stmt->bind_param("is", $user_id, $otp_code);
         $stmt->execute();
         $result = $stmt->get_result();
-        
-        // Debug logging
-        error_log("OTP verification query result rows: " . $result->num_rows);
         
         if ($result->num_rows === 0) {
             throw new Exception("Invalid or expired verification code");
@@ -175,7 +130,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['verify_otp'])) {
         echo json_encode(['success' => true, 'message' => 'Verification successful']);
         
     } catch (Exception $e) {
-        error_log("OTP Verification Error: " . $e->getMessage());
         echo json_encode(['success' => false, 'message' => $e->getMessage()]);
     }
     
@@ -221,37 +175,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_profile'])) {
                 throw new Exception("All password fields and verification code are required when changing password.");
             }
 
-            // Debug logging for OTP verification
-            error_log("Profile Update - Verifying OTP: " . $otp_code);
-            
-            // Get current server time
-            $current_time = date('Y-m-d H:i:s');
-            
-            // Verify OTP with explicit timestamp comparison
-            $stmt = $conn->prepare("
-                SELECT * FROM password_reset_otp 
-                WHERE user_id = ? 
-                AND otp_code = ? 
-                AND expires_at > ?
-                ORDER BY created_at DESC 
-                LIMIT 1
-            ");
-            $stmt->bind_param("iss", $user_id, $otp_code, $current_time);
+            // Verify OTP
+            $stmt = $conn->prepare("SELECT * FROM password_reset_otp WHERE user_id = ? AND otp_code = ? AND expires_at > NOW()");
+            $stmt->bind_param("is", $user_id, $otp_code);
             $stmt->execute();
             $otp_result = $stmt->get_result();
             
-            // Debug logging
-            error_log("OTP verification result rows: " . $otp_result->num_rows);
-            
             if ($otp_result->num_rows === 0) {
-                // Debug check for the latest OTP
-                $debug_stmt = $conn->prepare("SELECT otp_code, expires_at FROM password_reset_otp WHERE user_id = ? ORDER BY created_at DESC LIMIT 1");
-                $debug_stmt->bind_param("i", $user_id);
-                $debug_stmt->execute();
-                if ($row = $debug_stmt->get_result()->fetch_assoc()) {
-                    error_log("Latest OTP in DB - Code: " . $row['otp_code'] . ", Expires: " . $row['expires_at']);
-                    error_log("Current time: " . $current_time);
-                }
                 throw new Exception("Invalid or expired verification code.");
             }
 
@@ -645,7 +575,7 @@ $user_result = $stmt->get_result()->fetch_assoc();
                     <!-- Right Column - Profile Picture -->
                     <div class="col-md-5">
                         <div class="profile-picture-section">
-                            <img src="../<?php echo htmlspecialchars($user_result['profile_picture'] ?: '/uploads/default_pic/default.jpg'); ?>" 
+                            <img src="<?php echo htmlspecialchars($user_result['profile_picture'] ?: '/uploads/default_pic/default.jpg'); ?>" 
                                  alt="Profile Picture" class="profile-picture" id="currentProfilePic">
                             <img id="previewImage" class="preview-image">
                             <div class="mb-3">

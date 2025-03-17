@@ -30,12 +30,12 @@ if (!$event) {
     <?php include '../includes/header.php'; ?>
 
     <div class="container py-4">
-        <nav aria-label="breadcrumb" class="mb-4">
+        <!-- <nav aria-label="breadcrumb" class="mb-4">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="events.php">Events</a></li>
                 <li class="breadcrumb-item active" aria-current="page"><?php echo $event['title']; ?></li>
             </ol>
-        </nav>
+        </nav> -->
 
         <div class="row">
             <div class="col-lg-8">

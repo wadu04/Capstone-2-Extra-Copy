@@ -225,9 +225,9 @@ require_once '../includes/config.php';
   <script>
     // Array of background images (URLs). Replace with actual images if available.
     const backgrounds = [
-      '../assets/images/games/guess.jpg',
-      '../assets/images/games/memory.jpg',
-      '../assets/images/games/trivia.jpg'
+      '../assets/images/games/swan.jpg',
+      '../assets/images/games/kenon.jpg',
+      '../assets/images/games/white.jpg'
     ];
 
     // Array of 10 artifacts with unique images.
@@ -237,11 +237,11 @@ require_once '../includes/config.php';
       { id: 'artifact3', name: 'kayabang', info: "A headbasket intricately woven by Ibaloi women, used to carry goods through busy markets. Beyond its everyday function, the kayabang is a proud emblem of indigenous weaving artistry.", img: "../assets/images/panagbenga/kayabangg.png" },
       { id: 'artifact4', name: 'Woodcarving Totem Pole', info: "A monumental woodcarving displayed in and around the Baguio Museum. Carved by local artisans (like the celebrated Manong Ernesto), it represents a timeline of local history and the revered art of wood carving in Baguio.", img: "../assets/images/panagbenga/totem.png" },
       { id: 'artifact5', name: 'Barrel Man Figurine', info: "A quirky souvenir doll carved out of wood and partially hidden in a miniature barrel. Popular in local gift shops, it has evolved into a tongue-in-cheek icon of Baguio’s cultural dialogue between indigenous traditions and modern influences.", img: "../assets/images/panagbenga/barel.png" },
-      { id: 'artifact6', name: 'Museum Mummy Artifact', info: "Housed in the Baguio Museum, this indigenous mummy is a rare remnant of ancient mummification practices found in the cool highlands of Benguet, reflecting both spiritual beliefs and sophisticated ancestral rituals.", img: "../assets/images/panagbenga/mommy.png" },
-      { id: 'artifact7', name: 'Artifact 7', info: "An object passed down through generations.", img: "../assets/images/panagbenga/trivia.jpg" },
-      { id: 'artifact8', name: 'Artifact 8', info: "Reflects the artistic heritage of local artisans.", img: "../assets/images/panagbenga/memory.jpg" },
-      { id: 'artifact9', name: 'Artifact 9', info: "Used in traditional ceremonies and cultural events.", img: "../assets/images/panagbenga/memory.jpg" },
-      { id: 'artifact10', name: 'Artifact 10', info: "Represents Baguio's evolving culture.", img: "../assets/images/panagbenga/trivia.jpg" }
+      { id: 'artifact6', name: 'Mummy Artifact', info: "Housed in the Baguio Museum, this indigenous mummy is a rare remnant of ancient mummification practices found in the cool highlands of Benguet, reflecting both spiritual beliefs and sophisticated ancestral rituals.", img: "../assets/images/panagbenga/mommy.png" },
+      { id: 'artifact7', name: 'Strawberry', info: "Strawberries in Baguio come from nearby La Trinidad, the Strawberry Capital of the Philippines. Visitors can enjoy strawberry picking from November to May and try local treats like strawberry taho and ice cream.", img: "../assets/images/panagbenga/berry.png" },
+      { id: 'artifact8', name: 'Duli', info: "A necklace made of snake vertebrae, traditionally worn by women during childbirth for protection.", img: "../assets/images/panagbenga/duli.png" },
+      { id: 'artifact9', name: 'Bulul', info: "A carved wooden rice god often used in Ifugao rituals, these statues are treasured for their cultural and spiritual significance and are prominently featured in local museums", img: "../assets/images/panagbenga/bulul.png" },
+      { id: 'artifact10', name: 'Pasiking', info: "A traditional woven backpack crafted from natural fibers like rattan and bamboo, the pasiking is a practical yet artistic accessory that embodies the resourcefulness and creativity of the Cordilleran people", img: "../assets/images/panagbenga/pasiking.png" }
     ];
 
     let artifacts = []; // This will hold the game objects with found status
